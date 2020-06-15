@@ -8,9 +8,9 @@
 
 namespace MatlabPool
 {
-    struct Job
+    class Job
     {
-    private:
+        using String = std::string;
         using Args = std::vector<matlab::data::Array>;
         Job(const Job &) = delete;
         Job &operator=(const Job &) = delete;
@@ -19,7 +19,7 @@ namespace MatlabPool
         Job() : id(0) {}
 
         // TODO iterator durch "args"
-        Job(std::u16string &&function, std::size_t nlhs, Args &&args) : id(id_count++),
+        Job(String &&function, std::size_t nlhs, Args &&args) : id(id_count++),
                                                                         function(std::move(function)),
                                                                         nlhs(nlhs),
                                                                         args(std::move(args))
@@ -48,7 +48,7 @@ namespace MatlabPool
     public: // TODO
         static std::size_t id_count;
         std::size_t id;
-        std::u16string function;
+        String function;
         std::size_t nlhs;
         Args args;
     };
