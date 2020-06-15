@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "defines": [
+                "_DEBUG"
+            ],
+            "compilerPath": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2019b\\3P.instrset\\mingw_w64.instrset\\bin\\g++.exe", 
+            "intelliSenseMode": "gcc-x64",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "C:\\ProgramData\\MATLAB\\SupportPackages\\R2019b\\3P.instrset\\mingw_w64.instrset\\x86_64-w64-mingw32\\include",
+                    "C:\\Program Files\\MATLAB\\R2019b\\extern\\include"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "includePath": [
+                "${default}",
+                "C:\\Program Files\\MATLAB\\R2019b\\extern\\include",
+                "./",
+                "C:\\ProgramData\\MATLAB\\SupportPackages\\R2019b\\3P.instrset\\mingw_w64.instrset\\x86_64-w64-mingw32\\include"
+            ],
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
