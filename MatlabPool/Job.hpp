@@ -20,9 +20,9 @@ namespace MatlabPool
 
         // TODO iterator durch "args"
         Job(String &&function, std::size_t nlhs, Args &&args) : id(id_count++),
-                                                                        function(std::move(function)),
-                                                                        nlhs(nlhs),
-                                                                        args(std::move(args))
+                                                                function(std::move(function)),
+                                                                nlhs(nlhs),
+                                                                args(std::move(args))
         {
         }
 
