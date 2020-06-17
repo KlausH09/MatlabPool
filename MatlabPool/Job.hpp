@@ -3,11 +3,14 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "MatlabDataArray.hpp"
 
 namespace MatlabPool
 {
+    using Notifier = std::function<void()>;
+
     class Job
     {
         using String = std::string;
@@ -51,6 +54,7 @@ namespace MatlabPool
         String function;
         std::size_t nlhs;
         Args args;
+        Notifier notifier;
     };
     std::size_t Job::id_count = 1;
 } // namespace MatlabPool

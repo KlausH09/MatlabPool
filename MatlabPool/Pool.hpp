@@ -1,118 +1,156 @@
 #ifndef MATLABPOOL_POOL_HPP
 #define MATLABPOOL_POOL_HPP
 
-#include <exception>
-#include <future>
-#include <queue>
-#include <vector>
-#include <map>
-#include <thread>
 #include <mutex>
 #include <condition_variable>
-
-#include "MatlabEngine.hpp"
-#include "MatlabDataArray.hpp"
+#include <functional>
+#include <vector>
+#include <thread>
+#include <map>
+#include <queue>
 
 #include "./Job.hpp"
+#include "./EngineHack.hpp"
 
 namespace MatlabPool
 {
-
     class Pool
     {
-        using Result = std::vector<matlab::data::Array>;
 
-        const std::vector<matlab::engine::String> start_options = {u"-nosplash",u"nojvm",u"-singleCompThread"};
-
+        Pool(const Pool &) = delete;
+        Pool &operator=(const Pool &) = delete;
 
     public:
-        Pool(std::size_t n = std::thread::hardware_concurrency()) : stop(false), running(0)
+        Pool(std::size_t n, const std::vector<std::u16string> &options) : n(n),
+                                                                          engine(static_cast<EngineHack *>(operator new(sizeof(EngineHack) * n))),
+                                                                          stop(false),
+                                                                          worker_ready(new bool[n])
         {
-            threads.resize(n);
-
-            for (auto &t : threads)
+            for (std::size_t i = 0; i < n; i++)
             {
-                t = std::thread([this]() {
-                    
-                    std::unique_ptr<matlab::engine::MATLABEngine> matlabPtr = matlab::engine::startMATLAB(start_options);
+                new (engine + i) EngineHack(options);
+                worker_ready[i] = true;
+            }
+
+            master = std::thread([=]() {
+                auto get_free_worker = [=]() {
+                    std::size_t i;
+                    for (i = 0; i < n; i++)
+                        if (worker_ready[i])
+                            break;
+                    return i;
+                };
+
+                for (;;)
+                {
+                    std::size_t workerID;
                     Job job;
 
-                    for (;;)
                     {
-                        {
-                            std::unique_lock<std::mutex> lock(mutex);
-                            while (jobs.empty() && !stop)
-                            {
-                                cv.wait(lock);
-                            }
-                            if (stop)
-                                break;
-                            job = std::move(jobs.front());
-                            jobs.pop();
-                            running++;
-                        }
+                        std::unique_lock<std::mutex> lock(mutex);
+                        while (!stop && jobs.empty())
+                            cv_queue.wait(lock);
 
-                        Result result = matlabPtr->feval(std::move(job.function), job.nlhs, std::move(job.args));
+                        if (stop)
+                            break;
 
-                        {
-                            std::unique_lock<std::mutex> lock(mutex);
-                            running--;
-                            results[job.id] = std::move(result);
-                            cv_finished.notify_one();
-                        }
+                        job = std::move(jobs.front());
+                        jobs.pop();
                     }
-                });
-            }
+
+                    {
+                        std::unique_lock<std::mutex> lock_worker(mutex_worker);
+
+                        while ((workerID = get_free_worker()) >= n)
+                            cv_worker.wait(lock_worker);
+                    }
+
+                    job.notifier = [=]() {
+                        std::unique_lock<std::mutex> lock_worker(mutex_worker);
+                        worker_ready[workerID] = true;
+                        cv_worker.notify_one();
+                    };
+
+                    {
+                        std::unique_lock<std::mutex> lock(mutex);
+                        std::size_t job_id = job.id;
+                        futures[job_id] = std::move(engine[workerID].eval_job(std::move(job)));
+                        cv_future.notify_one();
+                    }
+                }
+            });
         }
         ~Pool()
         {
+            // join master thread
             {
                 std::unique_lock<std::mutex> lock(mutex);
                 stop = true;
-                cv.notify_all();
+                cv_queue.notify_one();
             }
-            for (auto &t : threads)
-                t.join();
+            master.join();
+
+            // cancel jobs
+            {
+                std::unique_lock<std::mutex> lock(mutex);
+                for (auto &e : futures)
+                    e.second.cancel(true);
+            }
+
+            // close Matlab engines
+            for (std::size_t i = 0; i < n; i++)
+                engine[i].~EngineHack();
+
+            operator delete(engine);
+            delete[] worker_ready;
         }
+
         std::size_t submit(Job &&job)
         {
             std::size_t job_id = job.id;
             std::unique_lock<std::mutex> lock(mutex);
             jobs.push(std::move(job));
-            cv.notify_one();
+            cv_queue.notify_one();
             return job_id;
         }
+
         void wait()
         {
             std::unique_lock<std::mutex> lock(mutex);
-            while (!jobs.empty() || running)
-                cv_finished.wait(lock);
+            while (!jobs.empty())
+                cv_future.wait(lock);
         }
 
-        Result wait(std::size_t job_id)
+        std::vector<matlab::data::Array> wait(std::size_t job_id)
         {
             std::unique_lock<std::mutex> lock(mutex);
 
-            std::map<std::size_t, Result>::iterator it;
-            while((it = results.find(job_id)) == results.end())
+            std::map<std::size_t, Future>::iterator it;
+            while ((it = futures.find(job_id)) == futures.end())
             {
-                cv_finished.wait(lock);
+                cv_future.wait(lock);
             }
 
-            Result tmp = std::move(results[job_id]);
-            results.erase(it);
-            return tmp;
+            Future tmp = std::move(futures[job_id]);
+            futures.erase(it);
+            return tmp.get();
         }
 
     private:
+        std::size_t n;
+        EngineHack *engine;
         bool stop;
-        std::size_t running;
+        bool *worker_ready;
+
+        std::thread master;
+
         std::queue<Job> jobs;
-        std::map<std::size_t, Result> results;
-        std::vector<std::thread> threads;
-        std::condition_variable cv;
-        std::condition_variable cv_finished;
+        std::map<std::size_t, Future> futures;
+        std::condition_variable cv_queue;
+        std::condition_variable cv_worker;
+        std::condition_variable cv_future;
         std::mutex mutex;
+        std::mutex mutex_worker;
     };
 
 } // namespace MatlabPool

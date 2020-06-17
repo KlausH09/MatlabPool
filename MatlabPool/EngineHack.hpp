@@ -7,12 +7,14 @@
 
 namespace MatlabPool
 {
+    using Future = matlab::execution::FutureResult<std::vector<matlab::data::Array>>;
+
     class EngineHack : public matlab::engine::MATLABEngine
     {
         struct MatlabPromiseHack
         {
             std::promise<std::vector<matlab::data::Array>> *prom;
-            std::size_t jobID;
+            Notifier notifier;
         };
         EngineHack(const EngineHack &) = delete;
         EngineHack &operator=(const EngineHack &) = delete;
@@ -20,9 +22,9 @@ namespace MatlabPool
     public:
         EngineHack(const std::vector<std::u16string> &options) : matlab::engine::MATLABEngine(start_matlabasync(options).get()) {}
 
-        inline matlab::execution::FutureResult<std::vector<matlab::data::Array>> eval_job(Job &&job,
-                                                                                          const std::shared_ptr<matlab::execution::StreamBuffer> &output = nullptr,
-                                                                                          const std::shared_ptr<matlab::execution::StreamBuffer> &error = nullptr)
+        inline Future eval_job(Job &&job,
+                               const std::shared_ptr<matlab::execution::StreamBuffer> &output = nullptr,
+                               const std::shared_ptr<matlab::execution::StreamBuffer> &error = nullptr)
         {
             using namespace matlab::execution;
 
@@ -39,7 +41,7 @@ namespace MatlabPool
             }
 
             std::promise<std::vector<matlab::data::Array>> *p = new std::promise<std::vector<matlab::data::Array>>();
-            MatlabPromiseHack *p_hack = new MatlabPromiseHack{p, job.id};
+            MatlabPromiseHack *p_hack = new MatlabPromiseHack{p, std::move(job.notifier)};
             std::future<std::vector<matlab::data::Array>> f = p->get_future();
 
             void *output_ = output ? new std::shared_ptr<StreamBuffer>(std::move(output)) : nullptr;
@@ -71,7 +73,7 @@ namespace MatlabPool
         {
             MatlabPromiseHack *p_hack = reinterpret_cast<MatlabPromiseHack *>(p);
             matlab::execution::set_feval_promise_data(p_hack->prom, nlhs, straight, plhs);
-            // TODO 
+            p_hack->notifier();
             delete p_hack;
         }
 
@@ -79,7 +81,7 @@ namespace MatlabPool
         {
             MatlabPromiseHack *p_hack = reinterpret_cast<MatlabPromiseHack *>(p);
             matlab::execution::set_feval_promise_exception(p_hack->prom, nlhs, straight, excTypeNumber, msg);
-            // TODO
+            p_hack->notifier();
             delete p_hack;
         }
     };
