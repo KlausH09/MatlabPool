@@ -57,12 +57,8 @@ namespace MatlabPool
             std::swap(j1.args, j2.args);
             std::swap(j1.result, j2.result);
 
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
             std::swap(j1.outputBuf, j2.outputBuf);
-#endif
-#ifdef MATLABPOOL_DISP_WORKER_ERROR
             std::swap(j1.errorBuf, j2.errorBuf);
-#endif
         }
 
         std::shared_ptr<SBuf> *get_outputBuf()
@@ -90,12 +86,8 @@ namespace MatlabPool
         ArgVal args;
 
     private:
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         std::shared_ptr<SBuf> outputBuf;
-#endif
-#ifdef MATLABPOOL_DISP_WORKER_ERROR
         std::shared_ptr<SBuf> errorBuf;
-#endif
 
     public: // TOOD
         ResultVal result;
