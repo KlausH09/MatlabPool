@@ -3,7 +3,8 @@
 # ================================================================
 
 # c++ Compiler
-CXX    := C:\ProgramData\MATLAB\SupportPackages\R2019b\3P.instrset\mingw_w64.instrset\bin\g++ 
+CXX    := g++
+#C:\ProgramData\MATLAB\SupportPackages\R2019b\3P.instrset\mingw_w64.instrset\bin\g++ 
 
 # Matlab root path
 MatlabRoot := C:\Program Files\MATLAB\R2019b
@@ -35,8 +36,8 @@ endif
 # Compiler Settings
 DEFINES := -DMATLAB_DEFAULT_RELEASE=R2017b -DUSE_MEX_CMD -m64 
 MEXDEFINES := -DMATLAB_MEX_FILE
-INCLUDE := -I"$(MatlabRoot)/extern/include"
-CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++11 -Wall
+INCLUDE := -I"$(MatlabRoot)/extern/include" -I./
+CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -Wall
 
 CXXOPTIMFLAGS :=
 # CXXOPTIMFLAGS := -O2 -fwrapv -DNDEBUG

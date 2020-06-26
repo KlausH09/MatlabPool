@@ -11,12 +11,12 @@
 
 #include "./Job.hpp"
 #include "./EngineHack.hpp"
+#include "./Definitions.hpp"
 
 namespace MatlabPool
 {
     class Pool
     {
-
         Pool(const Pool &) = delete;
         Pool &operator=(const Pool &) = delete;
 
@@ -65,16 +65,17 @@ namespace MatlabPool
                             cv_worker.wait(lock_worker);
                     }
 
-                    job.notifier = [=]() {
-                        std::unique_lock<std::mutex> lock_worker(mutex_worker);
-                        worker_ready[workerID] = true;
-                        cv_worker.notify_one();
-                    };
-
                     {
                         std::unique_lock<std::mutex> lock(mutex);
-                        std::size_t job_id = job.id;
-                        futures[job_id] = std::move(engine[workerID].eval_job(std::move(job)));
+                        JobID job_id = job.id;
+
+                        auto futureResult = engine[workerID].eval_job(job, [=]() {
+                            std::unique_lock<std::mutex> lock_worker(mutex_worker);
+                            worker_ready[workerID] = true;
+                            cv_worker.notify_one();
+                        });
+                        futureMap[job_id] = std::pair<Job, Future>(std::move(job),std::move(futureResult));
+
                         cv_future.notify_one();
                     }
                 }
@@ -93,8 +94,8 @@ namespace MatlabPool
             // cancel jobs
             {
                 std::unique_lock<std::mutex> lock(mutex);
-                for (auto &e : futures)
-                    e.second.cancel(true);
+                for (auto &e : futureMap)
+                    e.second.second.cancel(true);
             }
 
             // close Matlab engines
@@ -105,35 +106,30 @@ namespace MatlabPool
             delete[] worker_ready;
         }
 
-        std::size_t submit(Job &&job)
+        JobID submit(Job &&job)
         {
-            std::size_t job_id = job.id;
+            JobID job_id = job.id;
             std::unique_lock<std::mutex> lock(mutex);
             jobs.push(std::move(job));
             cv_queue.notify_one();
             return job_id;
         }
 
-        void wait()
-        {
-            std::unique_lock<std::mutex> lock(mutex);
-            while (!jobs.empty())
-                cv_future.wait(lock);
-        }
-
-        std::vector<matlab::data::Array> wait(std::size_t job_id)
+        Job wait(JobID job_id)
         {
             std::unique_lock<std::mutex> lock(mutex);
 
-            std::map<std::size_t, Future>::iterator it;
-            while ((it = futures.find(job_id)) == futures.end())
+            decltype(futureMap)::iterator it;
+            while ((it = futureMap.find(job_id)) == futureMap.end())
             {
                 cv_future.wait(lock);
             }
 
-            Future tmp = std::move(futures[job_id]);
-            futures.erase(it);
-            return tmp.get();
+            auto tmp = std::move(futureMap[job_id]);
+            futureMap.erase(it);
+
+            tmp.first.result = tmp.second.get();
+            return std::move(tmp.first);
         }
 
     private:
@@ -145,7 +141,7 @@ namespace MatlabPool
         std::thread master;
 
         std::queue<Job> jobs;
-        std::map<std::size_t, Future> futures;
+        std::map<JobID, std::pair<Job, Future>> futureMap;
         std::condition_variable cv_queue;
         std::condition_variable cv_worker;
         std::condition_variable cv_future;

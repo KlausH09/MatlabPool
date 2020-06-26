@@ -7,26 +7,35 @@
 
 #include "MatlabDataArray.hpp"
 
+#include "./Definitions.hpp"
+
+#define MATLABPOOL_DISP_WORKER_OUTPUT
+#define MATLABPOOL_DISP_WORKER_ERROR
+
 namespace MatlabPool
 {
-    using Notifier = std::function<void()>;
 
     class Job
     {
-        using String = std::string;
-        using Args = std::vector<matlab::data::Array>;
+        using SBuf = std::basic_stringbuf<char16_t>;
+
         Job(const Job &) = delete;
         Job &operator=(const Job &) = delete;
 
     public:
         Job() : id(0) {}
 
-        // TODO iterator durch "args"
-        Job(String &&function, std::size_t nlhs, Args &&args) : id(id_count++),
-                                                                function(std::move(function)),
-                                                                nlhs(nlhs),
-                                                                args(std::move(args))
+        Job(std::string &&function, std::size_t nlhs, ArgVal &&args) : id(id_count++),
+                                                                       function(std::move(function)),
+                                                                       nlhs(nlhs),
+                                                                       args(std::move(args))
         {
+#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
+            outputBuf = std::make_shared<SBuf>();
+#endif
+#ifdef MATLABPOOL_DISP_WORKER_ERROR
+            errorBuf = std::make_shared<SBuf>();
+#endif
         }
 
         Job(Job &&other) : Job()
@@ -40,23 +49,58 @@ namespace MatlabPool
             return *this;
         }
 
-        void swap(Job &j1, Job &j2)
+        void swap(Job &j1, Job &j2) // TODO friend
         {
             std::swap(j1.id, j2.id);
             std::swap(j1.function, j2.function);
             std::swap(j1.nlhs, j2.nlhs);
             std::swap(j1.args, j2.args);
+            std::swap(j1.result, j2.result);
+
+#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
+            std::swap(j1.outputBuf, j2.outputBuf);
+#endif
+#ifdef MATLABPOOL_DISP_WORKER_ERROR
+            std::swap(j1.errorBuf, j2.errorBuf);
+#endif
+        }
+
+        std::shared_ptr<SBuf> *get_outputBuf()
+        {
+#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
+            return &outputBuf;
+#else
+            return nullptr;
+#endif
+        }
+        std::shared_ptr<SBuf> *get_errorBuf()
+        {
+#ifdef MATLABPOOL_DISP_WORKER_ERROR
+            return &errorBuf;
+#else
+            return nullptr;
+#endif
         }
 
     public: // TODO
-        static std::size_t id_count;
-        std::size_t id;
-        String function;
+        inline static JobID id_count = 1;
+        JobID id;
+        std::string function;
         std::size_t nlhs;
-        Args args;
-        Notifier notifier;
+        ArgVal args;
+
+    private:
+#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
+        std::shared_ptr<SBuf> outputBuf;
+#endif
+#ifdef MATLABPOOL_DISP_WORKER_ERROR
+        std::shared_ptr<SBuf> errorBuf;
+#endif
+
+    public: // TOOD
+        ResultVal result;
     };
-    std::size_t Job::id_count = 1;
+
 } // namespace MatlabPool
 
 #endif

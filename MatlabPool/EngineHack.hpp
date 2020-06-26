@@ -3,11 +3,14 @@
 
 #include "MatlabDataArray.hpp"
 #include "MatlabEngine.hpp"
+
 #include "./Job.hpp"
+#include "./Definitions.hpp"
 
 namespace MatlabPool
 {
     using Future = matlab::execution::FutureResult<std::vector<matlab::data::Array>>;
+    using Notifier = std::function<void()>;
 
     class EngineHack : public matlab::engine::MATLABEngine
     {
@@ -22,9 +25,7 @@ namespace MatlabPool
     public:
         EngineHack(const std::vector<std::u16string> &options) : matlab::engine::MATLABEngine(start_matlabasync(options).get()) {}
 
-        inline Future eval_job(Job &&job,
-                               const std::shared_ptr<matlab::execution::StreamBuffer> &output = nullptr,
-                               const std::shared_ptr<matlab::execution::StreamBuffer> &error = nullptr)
+        Future eval_job(Job &job, Notifier &&notifier)
         {
             using namespace matlab::execution;
 
@@ -41,13 +42,20 @@ namespace MatlabPool
             }
 
             std::promise<std::vector<matlab::data::Array>> *p = new std::promise<std::vector<matlab::data::Array>>();
-            MatlabPromiseHack *p_hack = new MatlabPromiseHack{p, std::move(job.notifier)};
+            MatlabPromiseHack *p_hack = new MatlabPromiseHack{p, std::move(notifier)};
             std::future<std::vector<matlab::data::Array>> f = p->get_future();
 
-            void *output_ = output ? new std::shared_ptr<StreamBuffer>(std::move(output)) : nullptr;
-            void *error_ = error ? new std::shared_ptr<StreamBuffer>(std::move(error)) : nullptr;
+            // the maltab implementation will call 'delete output' and 'delete error', so we have to copy it
+            void *output = job.get_outputBuf() ? new std::shared_ptr<StreamBuffer>(*job.get_outputBuf()) : nullptr;
+            void *error = job.get_errorBuf() ? new std::shared_ptr<StreamBuffer>(*job.get_errorBuf()) : nullptr;
 
-            uintptr_t handle = cpp_engine_feval_with_completion(matlabHandle, job.function.c_str(), job.nlhs, false, argsImpl, nrhs, set_feval_promise_data_hack, set_feval_promise_exception_hack, p_hack, output_, error_, &writeToStreamBuffer, &deleteStreamBufferImpl);
+            uintptr_t handle = cpp_engine_feval_with_completion(matlabHandle, job.function.c_str(),
+                                                                job.nlhs, false, argsImpl, nrhs,
+                                                                set_feval_promise_data_hack,
+                                                                set_feval_promise_exception_hack,
+                                                                p_hack, output, error,
+                                                                &writeToStreamBuffer,
+                                                                &deleteStreamBufferImpl);
 
             return FutureResult<std::vector<matlab::data::Array>>(std::move(f), std::make_shared<TaskReference>(handle, cpp_engine_cancel_feval_with_completion));
         }

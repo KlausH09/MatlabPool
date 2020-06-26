@@ -31,17 +31,16 @@ int main()
 
     // Define a four-element array
     Job job1("sqrt", 1, {factory.createArray<double>({1, 4}, {-2.0, 2.0, 6.0, 8.0})});
-    Job job2("pause", 0, {factory.createArray<double>({1, 1}, {2.0})});
-
+    Job job2("disp", 0, {factory.createArray<double>({1, 1}, {2.0})});
 
     std::size_t id1 = pool.submit(std::move(job1));
     std::size_t id2 = pool.submit(std::move(job2));
 
-    std::vector<matlab::data::Array> result_vec = pool.wait(id1);
-    pool.wait(id2);
+    job1 = pool.wait(id1);
+    job2 = pool.wait(id2);
 
     // Display results
-    matlab::data::TypedArray<std::complex<double>> results = result_vec[0];
+    matlab::data::TypedArray<std::complex<double>> results = job1.result[0];
 
     for (auto r : results)
     {
@@ -49,5 +48,13 @@ int main()
         double imgPart = r.imag();
         std::cerr << "Square root is " << realPart << " + " << imgPart << "i\n";
     }
+
+    if(job2.get_outputBuf())
+    {
+        auto str = job2.get_outputBuf()->get()->str();
+        std::cerr << convertUTF16StringToUTF8String(str)  << '\n';
+    }
+        
+
     std::cerr << "Ende \n";
 }
