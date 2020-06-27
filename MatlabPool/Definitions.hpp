@@ -1,18 +1,16 @@
+// TODO evtl loeschen
+
 #ifndef MATLABPOOL_DEFINITIONS_HPP
 #define MATLABPOOL_DEFINITIONS_HPP
 
-#include <utility>
-#include <vector>
-#include "MatlabDataArray.hpp"
-
+#include <cstddef>
 
 namespace MatlabPool
 {
     using JobID = std::size_t;
 
-    using ResultVal = std::vector<matlab::data::Array>;
-    using ArgVal = std::vector<matlab::data::Array>;
-
+    constexpr const char lib_path[] = "MatlabPoolLib.dll";
+    constexpr const char lib_function[] = "construct";
 } // namespace MatlabPool
 
 

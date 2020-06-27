@@ -25,10 +25,11 @@ namespace MatlabPool
     public:
         Job() : id(0) {}
 
-        Job(std::string &&function, std::size_t nlhs, ArgVal &&args) : id(id_count++),
-                                                                       function(std::move(function)),
-                                                                       nlhs(nlhs),
-                                                                       args(std::move(args))
+        Job(std::string &&function, std::size_t nlhs, std::vector<matlab::data::Array> &&args)
+            : id(id_count++),
+              function(std::move(function)),
+              nlhs(nlhs),
+              args(std::move(args))
         {
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
             outputBuf = std::make_shared<SBuf>();
@@ -49,7 +50,7 @@ namespace MatlabPool
             return *this;
         }
 
-        void swap(Job &j1, Job &j2) // TODO friend
+        friend void swap(Job &j1, Job &j2)
         {
             std::swap(j1.id, j2.id);
             std::swap(j1.function, j2.function);
@@ -83,14 +84,14 @@ namespace MatlabPool
         JobID id;
         std::string function;
         std::size_t nlhs;
-        ArgVal args;
+        std::vector<matlab::data::Array> args;
 
     private:
         std::shared_ptr<SBuf> outputBuf;
         std::shared_ptr<SBuf> errorBuf;
 
     public: // TOOD
-        ResultVal result;
+        std::vector<matlab::data::Array> result;
     };
 
 } // namespace MatlabPool

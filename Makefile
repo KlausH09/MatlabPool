@@ -34,30 +34,29 @@ endif
 
 
 # Compiler Settings
-DEFINES := -DMATLAB_DEFAULT_RELEASE=R2017b -DUSE_MEX_CMD -m64 
+DEFINES := -DMATLAB_DEFAULT_RELEASE=R2017b -DUSE_MEX_CMD
 MEXDEFINES := -DMATLAB_MEX_FILE
 INCLUDE := -I"$(MatlabRoot)/extern/include" -I./
-CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -Wall
+CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -m64  -Wall
 
-CXXOPTIMFLAGS :=
-# CXXOPTIMFLAGS := -O2 -fwrapv -DNDEBUG
+# TODO !!!!!
+#CXXFLAGS += -g
+CXXFLAGS += -O2 -fwrapv -DNDEBUG
 
 # Linker Settings
-LINKER := $(CXX)
-LDFLAGS := -m64 -Wl,--no-undefined
+LDFLAGS := -Wl,--no-undefined
 LDTYPE := -shared -static -s
 LINKLIBS := -L"$(MatlabLibraryPath)" -llibmx -llibmex -llibmat -lm -llibmwlapack -llibmwblas -llibMatlabDataArray -llibMatlabEngine 
 
 
-# TODO !!!!!!!!!!!!!!!!
-CXXFLAGS += -g
-
 Target := test.exe
+DLL := MatlabPoolLib.$(DLLExtension)
 
-all: $(Target)
+all: $(DLL) $(Target)
 
 # engine test
-$(basename $(Target)).o: $(basename $(Target)).cpp
-	$(CXX) -c -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $<
-$(Target): $(basename $(Target)).o
-	$(LINKER) -o $@ $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
+$(Target): $(basename $(Target)).cpp $(wildcard *.hpp) Makefile
+	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
+
+$(DLL): $(basename $(DLL)).cpp $(wildcard *.hpp) Makefile
+	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
