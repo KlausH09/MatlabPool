@@ -7,13 +7,12 @@
 
 #include "MatlabDataArray.hpp"
 
-#include "./Definitions.hpp"
-
 #define MATLABPOOL_DISP_WORKER_OUTPUT
 #define MATLABPOOL_DISP_WORKER_ERROR
 
 namespace MatlabPool
 {
+    using JobID = std::size_t;
 
     class Job
     {
@@ -23,7 +22,7 @@ namespace MatlabPool
         Job &operator=(const Job &) = delete;
 
     public:
-        Job() : id(0) {}
+        Job() noexcept : id(0) {}
 
         Job(std::string &&function, std::size_t nlhs, std::vector<matlab::data::Array> &&args)
             : id(id_count++),
@@ -39,18 +38,18 @@ namespace MatlabPool
 #endif
         }
 
-        Job(Job &&other) : Job()
+        Job(Job &&other) noexcept : Job()
         {
             swap(*this, other);
         }
 
-        Job &operator=(Job &&other)
+        Job &operator=(Job &&other) noexcept
         {
             swap(*this, other);
             return *this;
         }
 
-        friend void swap(Job &j1, Job &j2)
+        friend void swap(Job &j1, Job &j2) noexcept
         {
             std::swap(j1.id, j2.id);
             std::swap(j1.function, j2.function);
@@ -62,7 +61,7 @@ namespace MatlabPool
             std::swap(j1.errorBuf, j2.errorBuf);
         }
 
-        std::shared_ptr<SBuf> *get_outputBuf()
+        std::shared_ptr<SBuf> *get_outputBuf() noexcept
         {
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
             return &outputBuf;
@@ -70,7 +69,7 @@ namespace MatlabPool
             return nullptr;
 #endif
         }
-        std::shared_ptr<SBuf> *get_errorBuf()
+        std::shared_ptr<SBuf> *get_errorBuf() noexcept
         {
 #ifdef MATLABPOOL_DISP_WORKER_ERROR
             return &errorBuf;
@@ -85,13 +84,12 @@ namespace MatlabPool
         std::string function;
         std::size_t nlhs;
         std::vector<matlab::data::Array> args;
+        std::vector<matlab::data::Array> result;
 
     private:
         std::shared_ptr<SBuf> outputBuf;
         std::shared_ptr<SBuf> errorBuf;
 
-    public: // TOOD
-        std::vector<matlab::data::Array> result;
     };
 
 } // namespace MatlabPool

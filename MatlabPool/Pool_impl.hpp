@@ -8,11 +8,12 @@
 #include <thread>
 #include <map>
 #include <queue>
+#include <exception>
+#include <sstream>
 
 #include "./Pool.hpp"
 #include "./Job.hpp"
 #include "./EngineHack.hpp"
-#include "./Definitions.hpp"
 
 namespace MatlabPool
 {
@@ -24,9 +25,9 @@ namespace MatlabPool
     public:
         PoolImpl(std::size_t n, const std::vector<std::u16string> &options)
             : n(n),
-              engine(static_cast<EngineHack *>(operator new(sizeof(EngineHack) * n))),
+              worker_ready(n),
               stop(false),
-              worker_ready(new bool[n])
+              engine(static_cast<EngineHack *>(operator new(sizeof(EngineHack) * n)))
         {
             for (std::size_t i = 0; i < n; i++)
             {
@@ -35,17 +36,9 @@ namespace MatlabPool
             }
 
             master = std::thread([=]() {
-                auto get_free_worker = [=]() {
-                    std::size_t i;
-                    for (i = 0; i < n; i++)
-                        if (worker_ready[i])
-                            break;
-                    return i;
-                };
-
                 for (;;)
                 {
-                    std::size_t workerID;
+
                     Job job;
 
                     {
@@ -57,15 +50,10 @@ namespace MatlabPool
                             break;
 
                         job = std::move(jobs.front());
-                        jobs.pop();
+                        jobs.pop_front();
                     }
 
-                    {
-                        std::unique_lock<std::mutex> lock_worker(mutex_worker);
-
-                        while ((workerID = get_free_worker()) >= n)
-                            cv_worker.wait(lock_worker);
-                    }
+                    std::size_t workerID = get_free_worker();
 
                     {
                         std::unique_lock<std::mutex> lock(mutex);
@@ -105,29 +93,46 @@ namespace MatlabPool
                 engine[i].~EngineHack();
 
             operator delete(engine);
-            delete[] worker_ready;
         }
 
         JobID submit(Job &&job) override
         {
             JobID job_id = job.id;
             std::unique_lock<std::mutex> lock(mutex);
-            jobs.push(std::move(job));
+            jobs.push_back(std::move(job));
             cv_queue.notify_one();
             return job_id;
         }
 
-        Job wait(JobID job_id) override
+        bool exists(JobID id) noexcept override
         {
             std::unique_lock<std::mutex> lock(mutex);
 
+            for (const auto &e : jobs)
+                if (e.id == id)
+                    return true;
+
+            for (const auto &e : futureMap)
+                if (e.first == id)
+                    return true;
+
+            return false;
+        }
+
+        Job wait(JobID id) override
+        {
+            if (!exists(id))
+                throw JobNotExists(id);
+
+            std::unique_lock<std::mutex> lock(mutex);
+
             decltype(futureMap)::iterator it;
-            while ((it = futureMap.find(job_id)) == futureMap.end())
+            while ((it = futureMap.find(id)) == futureMap.end())
             {
                 cv_future.wait(lock);
             }
 
-            auto tmp = std::move(futureMap[job_id]);
+            auto tmp = std::move(futureMap[id]);
             futureMap.erase(it);
 
             tmp.first.result = tmp.second.get();
@@ -135,14 +140,28 @@ namespace MatlabPool
         }
 
     private:
+        std::size_t get_free_worker() noexcept
+        {
+            std::unique_lock<std::mutex> lock(mutex_worker);
+            for (;;)
+            {
+                for (std::size_t i = 0; i < n; i++)
+                    if (worker_ready[i])
+                        return i;
+
+                cv_worker.wait(lock);
+            }
+        }
+
+    private:
         std::size_t n;
-        EngineHack *engine;
+        std::vector<bool> worker_ready;
         bool stop;
-        bool *worker_ready;
+        EngineHack *engine;
 
         std::thread master;
 
-        std::queue<Job> jobs;
+        std::deque<Job> jobs;
         std::map<JobID, std::pair<Job, Future>> futureMap;
         std::condition_variable cv_queue;
         std::condition_variable cv_worker;

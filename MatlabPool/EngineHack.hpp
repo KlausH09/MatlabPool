@@ -5,7 +5,6 @@
 #include "MatlabEngine.hpp"
 
 #include "./Job.hpp"
-#include "./Definitions.hpp"
 
 namespace MatlabPool
 {
@@ -37,9 +36,7 @@ namespace MatlabPool
             matlab::data::impl::ArrayImpl **argsImpl = argsImplPtr.get();
             size_t i = 0;
             for (auto &e : job.args)
-            {
                 argsImpl[i++] = matlab::data::detail::Access::getImpl<matlab::data::impl::ArrayImpl>(std::move(e));
-            }
 
             std::promise<std::vector<matlab::data::Array>> *p = new std::promise<std::vector<matlab::data::Array>>();
             MatlabPromiseHack *p_hack = new MatlabPromiseHack{p, std::move(notifier)};

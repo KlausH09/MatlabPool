@@ -3,38 +3,50 @@
 
 #include "./Pool.hpp"
 
-#include <windows.h>
-//#include <dlfcn.h>
+
 
 #include <exception>
 #include <string>
+#include <sstream>
 
-using namespace std::string_literals;
+#ifdef _WIN32
+#include <windows.h>
+#define MATLABPOOL_HANDLE HMODULE
+#define MATLABPOOL_LOADLIBRARY(path) LoadLibraryA((path))
+#define MATLABPOOL_LOADLIBFUN(handle, name) GetProcAddress((handle), (name))
+#define MATLABPOOL_FREELIBRARY(handle) FreeLibrary((handle))
+#else
+#include <dlfcn.h>
+#define MATLABPOOL_HANDLE void*
+#define MATLABPOOL_LOADLIBRARY(path) dlopen((path), RTLD_LAZY | RTLD_LOCAL)
+#define MATLABPOOL_LOADLIBFUN(handle, name) dlsym((handle), (name))
+#define MATLABPOOL_FREELIBRARY(handle) dlclose((handle))
+#endif
 
 namespace MatlabPool
 {
     class LibLoader
     {
         using Constructor = Pool *(std::size_t, const std::vector<std::u16string> &);
+        static constexpr const char lib_path[] = "MatlabPoolLib.dll";
+        static constexpr const char lib_function[] = "construct";
 
         LibLoader(const LibLoader &) = delete;
         LibLoader &operator=(const LibLoader &) = delete;
 
-        LibLoader() : handle(nullptr)
+        LibLoader()
         {
-            handle = LoadLibraryA(lib_path);
-            //handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_LOCAL);
-
+            handle = MATLABPOOL_LOADLIBRARY(lib_path);
             if (!handle)
-                throw std::runtime_error("Cannot load Library \""s + lib_path + "\"\nError Code: " + std::to_string(GetLastError()));
+                throw CannotLoadDLL(lib_path);
 
             constructor =
-                reinterpret_cast<Constructor *>(GetProcAddress(handle, lib_function));
-            //constructor =
-            //   reinterpret_cast<Constructor*>(dlsym(handle, lib_function));
-
+                reinterpret_cast<Constructor *>(MATLABPOOL_LOADLIBFUN(handle, lib_function));
             if (!constructor)
-                throw std::runtime_error("Cannot load Library Function \""s + lib_function + "\"\nError Code: " + std::to_string(GetLastError()));
+            {
+                MATLABPOOL_FREELIBRARY(handle);
+                throw CannotLoadFunction(lib_function);
+            }
         }
 
         static LibLoader &get()
@@ -44,22 +56,66 @@ namespace MatlabPool
         }
 
     public:
+        class Exception : public std::exception
+        {
+        };
+        class CannotLoadDLL : public Exception
+        {
+        public:
+            CannotLoadDLL(const char *path)
+            {
+                std::ostringstream os;
+                os << "Cannot load Library \"" << path << "\"\n";
+                addErrorMsg(os);
+                msg = os.str();
+            }
+            const char *what() const noexcept override
+            {
+                return msg.c_str();
+            }
+        private:
+            std::string msg;
+        };
+        class CannotLoadFunction : public Exception
+        {
+        public:
+            CannotLoadFunction(const char* name)
+            {
+                std::ostringstream os;
+                os << "Cannot load Library Function \"" << name << "\"\n";
+                addErrorMsg(os);
+                msg = os.str();
+            }
+            const char *what() const noexcept override
+            {
+                return msg.c_str();
+            }
+        private:
+            std::string msg;
+        };
+
         ~LibLoader()
         {
             if (handle)
-            {
-                FreeLibrary(handle);
-                //dlclose(handle);
-            }
+                MATLABPOOL_FREELIBRARY(handle);
         }
 
         static Pool *createPool(std::size_t n, const std::vector<std::u16string> &options)
         {
             return get().constructor(n, options);
         }
+    private:
+        static void addErrorMsg(std::ostringstream &os)
+        {
+#ifdef _WIN32
+            os << "Error Code: " << std::to_string(GetLastError());
+#else
+            os << "Error: " << dlerror();
+#endif
+        }
 
     private:
-        HMODULE handle;
+        MATLABPOOL_HANDLE handle;
         Constructor *constructor;
     };
 } // namespace MatlabPool
