@@ -41,7 +41,7 @@ CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -m64  -Wall
 
 # TODO !!!!!
 #CXXFLAGS += -g
-CXXFLAGS += -O2 -fwrapv -DNDEBUG
+#CXXFLAGS += -O2 -fwrapv -DNDEBUG
 
 # Linker Settings
 LDFLAGS := -Wl,--no-undefined

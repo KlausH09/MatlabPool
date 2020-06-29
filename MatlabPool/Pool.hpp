@@ -32,9 +32,18 @@ namespace MatlabPool
         private:
             std::string msg;
         };
+        class EmptyPool : public Exception
+        {
+        public:
+            const char *what() const noexcept override
+            {
+                return "pool size is equal zero";
+            }
+        };
 
         virtual ~Pool(){}
-
+        virtual void resize(std::size_t n_new, const std::vector<std::u16string> &options) = 0;
+        virtual std::size_t size() const = 0;
         virtual JobID submit(Job &&job) = 0;
         virtual bool exists(JobID id) noexcept = 0;
         virtual Job wait(JobID job_id) = 0;

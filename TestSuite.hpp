@@ -33,8 +33,10 @@ namespace TestSuite
             }
         }
     };
+
+    class TestSuiteException : public std::exception {};
     
-    class UnexpectOutputSize : public std::exception
+    class UnexpectOutputSize : public TestSuiteException
     {
     public:
         UnexpectOutputSize(std::size_t expect, std::size_t size)
@@ -58,7 +60,7 @@ namespace TestSuite
     };
 
     template <typename T>
-    class UnexpectNumValue : public std::exception
+    class UnexpectNumValue : public TestSuiteException
     {
     public:
         UnexpectNumValue(T expect, T value)
@@ -83,7 +85,7 @@ namespace TestSuite
     };
 
     template <typename Error>
-    class UnexpectException : public std::exception
+    class UnexpectException : public TestSuiteException
     {
     public:
         UnexpectException()
