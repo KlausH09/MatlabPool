@@ -10,7 +10,7 @@ namespace MatlabPool
     class StreamBuf
     {
     protected:
-        using SBuf = std::basic_stringbuf<char16_t>;
+        using SBuf = std::basic_streambuf<char16_t>;
     public:
         std::shared_ptr<SBuf> get();
         const char16_t* str() const;
@@ -55,6 +55,7 @@ namespace MatlabPool
     class RealStreamBuffer : public StreamBuf
     {
     public:
+
         std::shared_ptr<SBuf> get()
         {
             return std::shared_ptr<SBuf>(stream.rdbuf());

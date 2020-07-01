@@ -10,7 +10,7 @@
 // TODO test mit valgrind
 // TODO test C0 ueberdeckung
 
-#define INTENSIVE_TEST
+//#define INTENSIVE_TEST
 
 void run_test()
 {

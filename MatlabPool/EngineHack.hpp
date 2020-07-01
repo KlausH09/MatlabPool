@@ -43,8 +43,8 @@ namespace MatlabPool
             std::future<std::vector<matlab::data::Array>> f = p->get_future();
 
             // the maltab implementation will call 'delete output' and 'delete error', so we have to copy it
-            void *output = job.outputBuf.get() ? new std::shared_ptr<StreamBuffer>(job.outputBuf.get().get()) : nullptr;
-            void *error = job.outputBuf.get() ? new std::shared_ptr<StreamBuffer>(job.outputBuf.get().get()) : nullptr;
+            void *output = job.outputBuf.get() ? new std::shared_ptr<StreamBuffer>(job.outputBuf.get()) : nullptr;
+            void *error = job.errorBuf.get() ? new std::shared_ptr<StreamBuffer>(job.errorBuf.get()) : nullptr;
 
             std::string funstr = convertUTF16StringToASCIIString(job.function);
 
