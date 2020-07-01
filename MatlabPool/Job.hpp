@@ -5,13 +5,29 @@
 #include <vector>
 #include <functional>
 
+#include "./StreamBuf.hpp"
+
 #include "MatlabDataArray.hpp"
 
-#define MATLABPOOL_DISP_WORKER_OUTPUT
-#define MATLABPOOL_DISP_WORKER_ERROR
+//#define MATLABPOOL_DISP_WORKER_OUTPUT
+//#define MATLABPOOL_DISP_WORKER_ERROR
 
 namespace MatlabPool
 {
+#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
+    constexpr const bool disp_output_buffer = true;
+    using OutputBuf = RealStreamBuffer;
+#else
+    constexpr const bool disp_output_buffer = false;
+    using OutputBuf = EmptyStreamBuffer;
+#endif
+#ifdef MATLABPOOL_DISP_WORKER_ERROR
+    constexpr const bool disp_error_buffer = true;
+    using ErrorBuf = RealStreamBuffer;
+#else
+    constexpr const bool disp_error_buffer = false;
+    using ErrorBuf = EmptyStreamBuffer;
+#endif
     using JobID = std::size_t;
 
     class Job
@@ -27,14 +43,7 @@ namespace MatlabPool
         Job(std::u16string function)
             : id(id_count++),
               function(std::move(function))
-        {
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-            outputBuf = std::make_shared<SBuf>();
-#endif
-#ifdef MATLABPOOL_DISP_WORKER_ERROR
-            errorBuf = std::make_shared<SBuf>();
-#endif
-        }
+        {}
 
         Job(Job &&other) noexcept : Job()
         {
@@ -56,31 +65,13 @@ namespace MatlabPool
             std::swap(j1.errorBuf, j2.errorBuf);
         }
 
-        std::shared_ptr<SBuf> *get_outputBuf() noexcept
-        {
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-            return &outputBuf;
-#else
-            return nullptr;
-#endif
-        }
-        std::shared_ptr<SBuf> *get_errorBuf() noexcept
-        {
-#ifdef MATLABPOOL_DISP_WORKER_ERROR
-            return &errorBuf;
-#else
-            return nullptr;
-#endif
-        }
-
     public: // TODO
         inline static JobID id_count = 1;
         JobID id;
         std::u16string function;
 
-    private:
-        std::shared_ptr<SBuf> outputBuf;
-        std::shared_ptr<SBuf> errorBuf;
+        OutputBuf outputBuf;
+        ErrorBuf errorBuf;
     };
 
     class Job_feval : public Job

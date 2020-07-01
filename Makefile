@@ -15,6 +15,7 @@ MatlabRoot := C:\Program Files\MATLAB\R2019b
 
 
 ifeq ($(OS),Windows_NT)
+    RM := del
     MEXExtension := mexw64
     DLLExtension := dll
     MatlabLibraryPath := $(MatlabRoot)\extern\lib\win64\mingw64
