@@ -46,7 +46,9 @@ namespace MatlabPool
             void *output = job.get_outputBuf() ? new std::shared_ptr<StreamBuffer>(*job.get_outputBuf()) : nullptr;
             void *error = job.get_errorBuf() ? new std::shared_ptr<StreamBuffer>(*job.get_errorBuf()) : nullptr;
 
-            uintptr_t handle = cpp_engine_feval_with_completion(matlabHandle, job.function.c_str(),
+            std::string funstr = convertUTF16StringToASCIIString(job.function);
+
+            uintptr_t handle = cpp_engine_feval_with_completion(matlabHandle, funstr.c_str(),
                                                                 job.nlhs, false, argsImpl, nrhs,
                                                                 set_feval_promise_data_hack,
                                                                 set_feval_promise_exception_hack,
@@ -88,6 +90,19 @@ namespace MatlabPool
             matlab::execution::set_feval_promise_exception(p_hack->prom, nlhs, straight, excTypeNumber, msg);
             p_hack->notifier();
             delete p_hack;
+        }
+
+        // copied from ExecutionInterface::convertUTF16StringToASCIIString
+        inline std::string convertUTF16StringToASCIIString(const std::u16string &str)
+        {
+            std::unique_ptr<char []> asciistr_ptr(new char[str.size()+1]);
+            asciistr_ptr.get()[str.size()] = '\0';
+            const char* u16_src = reinterpret_cast<const char*>(str.c_str());
+            for(size_t n = 0; n < str.size(); ++n)
+            {   
+               asciistr_ptr.get()[n] = u16_src[2*n];
+            }
+            return std::string(asciistr_ptr.get());
         }
     };
 } // namespace MatlabPool

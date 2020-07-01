@@ -31,7 +31,7 @@ void run_test()
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
         for (std::size_t i = 0; i < N; i++)
-            jobid[i] = pool->submit(Job("sqrt", 1, {factory.createArray<Float>({1}, {Float(i)})}));
+            jobid[i] = pool->submit(Job(u"sqrt", 1, {factory.createArray<Float>({1}, {Float(i)})}));
 
         for (std::size_t i = 0; i < N; i++)
         {
@@ -47,7 +47,7 @@ void run_test()
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
         for (std::size_t i = 0; i < N; i++)
-            jobid[i] = pool->submit(Job("sqrt", 1, {factory.createArray<Float>({1}, {Float(i)})}));
+            jobid[i] = pool->submit(Job(u"sqrt", 1, {factory.createArray<Float>({1}, {Float(i)})}));
 
         for (std::size_t i = 0; i < N; i++)
         {
@@ -63,7 +63,7 @@ void run_test()
     Test::run("increase pool size", [&]() {
         std::array<JobID, 31> jobid;
         for (JobID &i : jobid)
-            i = pool->submit(Job("pause", 0, {factory.createArray<double>({1}, {0.01})}));
+            i = pool->submit(Job(u"pause", 0, {factory.createArray<double>({1}, {0.01})}));
 
         pool->resize(pool->size() + 2, options);
         
@@ -74,7 +74,7 @@ void run_test()
     Test::run("decrease pool size", [&]() {
         std::array<JobID, 31> jobid;
         for (JobID &i : jobid)
-            i = pool->submit(Job("pause", 0, {factory.createArray<double>({1}, {0.01})}));
+            i = pool->submit(Job(u"pause", 0, {factory.createArray<double>({1}, {0.01})}));
 
         pool->resize(pool->size() - 2, options);
         
@@ -85,7 +85,7 @@ void run_test()
     Test::run("restart pool", [&]() {
         std::array<JobID, 31> jobid;
         for (JobID &i : jobid)
-            i = pool->submit(Job("pause", 0, {factory.createArray<double>({1}, {0.01})}));
+            i = pool->submit(Job(u"pause", 0, {factory.createArray<double>({1}, {0.01})}));
 
         pool_guard = std::unique_ptr<Pool>(LibLoader::createPool(nof_worker, options));
         pool = pool_guard.get();
@@ -106,7 +106,7 @@ void run_test()
     });
 
     Test::run("wait x2 for same job", [&]() {
-        JobID id = pool->submit(Job("sqrt", 1, {factory.createArray<double>({1}, {0.5})}));
+        JobID id = pool->submit(Job(u"sqrt", 1, {factory.createArray<double>({1}, {0.5})}));
         pool->wait(id);
         UnexpectException<Pool::JobNotExists>::check([&]() {
             pool->wait(id);
@@ -114,7 +114,7 @@ void run_test()
     });
 
     Test::run("invalid job", [&]() {
-        JobID id = pool->submit(Job("sqrt", 1, {factory.createArray<double>({0}, {})}));
+        JobID id = pool->submit(Job(u"sqrt", 1, {factory.createArray<double>({0}, {})}));
         pool->wait(id); // TODO
     });
 }

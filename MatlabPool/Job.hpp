@@ -24,7 +24,7 @@ namespace MatlabPool
     public:
         Job() noexcept : id(0) {}
 
-        Job(std::string &&function, std::size_t nlhs, std::vector<matlab::data::Array> &&args)
+        Job(std::u16string function, std::size_t nlhs, std::vector<matlab::data::Array> &&args)
             : id(id_count++),
               function(std::move(function)),
               nlhs(nlhs),
@@ -81,7 +81,7 @@ namespace MatlabPool
     public: // TODO
         inline static JobID id_count = 1;
         JobID id;
-        std::string function;
+        std::u16string function;
         std::size_t nlhs;
         std::vector<matlab::data::Array> args;
         std::vector<matlab::data::Array> result;
