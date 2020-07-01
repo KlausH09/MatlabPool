@@ -59,6 +59,7 @@ namespace MatlabPool
                     {
                         std::unique_lock<std::mutex> lock_worker(mutex_worker);
                         std::size_t workerID = get_free_worker(lock_worker);
+                        job.set_workerID(workerID);
 
                         futureResult = engine[workerID].get()->eval_job(job, [=]() {
                             std::unique_lock<std::mutex> lock_worker(mutex_worker);
@@ -178,6 +179,36 @@ namespace MatlabPool
 
             tmp.first.result = tmp.second.get();
             return std::move(tmp.first);
+        }
+
+        void eval(Job &job) override
+        {
+            std::lock_guard<std::mutex> lock_worker(mutex_worker);
+
+            std::vector<OutputBuf> outBuf(engine.size());
+            std::vector<ErrorBuf> errBuf(engine.size());
+
+            std::vector<matlab::engine::FutureResult<void>> future(engine.size());
+
+            for (std::size_t i = 0; i < engine.size(); i++)
+            {
+                future[i] = engine[i]->evalAsync(job.function, outBuf[i].get(), errBuf[i].get());
+            }
+
+            for (std::size_t i = 0; i < engine.size(); i++)
+            {
+                future[i].get();
+                if (!outBuf[i].empty())
+                {
+                    job.outputBuf << u"============= Output Worker " << i + 1 << " ==============";
+                    job.outputBuf << outBuf[i].str();
+                }
+                if (!errBuf[i].empty())
+                {
+                    job.errorBuf << u"============= Error Worker " << i + 1 << " ===============";
+                    job.errorBuf << errBuf[i].str();
+                }
+            }
         }
 
     private:

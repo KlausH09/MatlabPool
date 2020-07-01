@@ -47,6 +47,7 @@ namespace MatlabPool
         virtual JobID submit(Job_feval &&job) = 0;
         virtual bool exists(JobID id) noexcept = 0;
         virtual Job_feval wait(JobID job_id) = 0;
+        virtual void eval(Job &job) = 0;
     };
 } // namespace MatlabPool
 

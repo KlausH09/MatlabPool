@@ -30,16 +30,21 @@ void run_test()
         using Float = double;
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
+        std::vector<bool> worker_used(pool->size(), false);
         for (std::size_t i = 0; i < N; i++)
             jobid[i] = pool->submit(Job_feval(u"sqrt", 1, {factory.createArray<Float>({1}, {Float(i)})}));
 
         for (std::size_t i = 0; i < N; i++)
         {
             Job_feval job = pool->wait(jobid[i]);
+            worker_used[job.get_workerID()] = true;
             UnexpectOutputSize::check(1, job.result.size());
             matlab::data::TypedArray<Float> result = job.result[0];
             UnexpectNumValue<Float>::check(std::sqrt(Float(i)), Float(result[0]));
         }
+        for (auto e : worker_used)
+            if (!e)
+                std::runtime_error("unused workers");
     });
 
     Test::run("sqrt(i) mit i = 0,1,...,30, float", [&]() {
@@ -111,6 +116,11 @@ void run_test()
         UnexpectException<Pool::JobNotExists>::check([&]() {
             pool->wait(id);
         });
+    });
+
+    Test::run("eval", [&]() {
+        Job job(u"pwd"); 
+        pool->eval(job); // TODO
     });
 
     Test::run("invalid job", [&]() {
