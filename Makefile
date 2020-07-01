@@ -60,3 +60,7 @@ $(Target): $(basename $(Target)).cpp $(wildcard *.hpp) Makefile
 
 $(DLL): $(basename $(DLL)).cpp $(wildcard *.hpp) Makefile
 	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
+
+clean: 
+	$(RM) .\$(Target)
+	$(RM) .\$(DLL)

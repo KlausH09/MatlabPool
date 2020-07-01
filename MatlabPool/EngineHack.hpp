@@ -24,7 +24,7 @@ namespace MatlabPool
     public:
         EngineHack(const std::vector<std::u16string> &options) : matlab::engine::MATLABEngine(start_matlabasync(options).get()) {}
 
-        Future eval_job(Job &job, Notifier &&notifier)
+        Future eval_job(Job_feval &job, Notifier &&notifier)
         {
             using namespace matlab::execution;
 

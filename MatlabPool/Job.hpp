@@ -24,11 +24,9 @@ namespace MatlabPool
     public:
         Job() noexcept : id(0) {}
 
-        Job(std::u16string function, std::size_t nlhs, std::vector<matlab::data::Array> &&args)
+        Job(std::u16string function)
             : id(id_count++),
-              function(std::move(function)),
-              nlhs(nlhs),
-              args(std::move(args))
+              function(std::move(function))
         {
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
             outputBuf = std::make_shared<SBuf>();
@@ -49,13 +47,10 @@ namespace MatlabPool
             return *this;
         }
 
-        friend void swap(Job &j1, Job &j2) noexcept
+        void swap(Job &j1, Job &j2) noexcept
         {
             std::swap(j1.id, j2.id);
             std::swap(j1.function, j2.function);
-            std::swap(j1.nlhs, j2.nlhs);
-            std::swap(j1.args, j2.args);
-            std::swap(j1.result, j2.result);
 
             std::swap(j1.outputBuf, j2.outputBuf);
             std::swap(j1.errorBuf, j2.errorBuf);
@@ -82,14 +77,59 @@ namespace MatlabPool
         inline static JobID id_count = 1;
         JobID id;
         std::u16string function;
+
+    private:
+        std::shared_ptr<SBuf> outputBuf;
+        std::shared_ptr<SBuf> errorBuf;
+    };
+
+    class Job_feval : public Job
+    {
+    public:
+        Job_feval() : Job(){};
+        Job_feval(std::u16string function, std::size_t nlhs, std::vector<matlab::data::Array> &&args) : Job(std::move(function)),
+                                                                                                        nlhs(nlhs),
+                                                                                                        args(std::move(args)),
+                                                                                                        workerID(0)
+        {
+        }
+
+        Job_feval(Job_feval &&other) noexcept : Job_feval()
+        {
+            swap(*this, other);
+        }
+
+        Job_feval &operator=(Job_feval &&other) noexcept
+        {
+            swap(*this, other);
+            return *this;
+        }
+
+        void swap(Job_feval &j1, Job_feval &j2) noexcept
+        {
+            Job::swap(j1,j2);
+            std::swap(j1.nlhs, j2.nlhs);
+            std::swap(j1.args, j2.args);
+            std::swap(j1.result, j2.result);
+            std::swap(j1.workerID, j2.workerID);
+        }
+
+        void set_workerID(std::size_t val) noexcept
+        {
+            workerID = val + 1;
+        }
+        ssize_t get_workerID() const noexcept
+        {
+            return ((ssize_t)workerID) - 1;
+        }
+
+    public:
         std::size_t nlhs;
         std::vector<matlab::data::Array> args;
         std::vector<matlab::data::Array> result;
 
     private:
-        std::shared_ptr<SBuf> outputBuf;
-        std::shared_ptr<SBuf> errorBuf;
-
+        std::size_t workerID;
     };
 
 } // namespace MatlabPool

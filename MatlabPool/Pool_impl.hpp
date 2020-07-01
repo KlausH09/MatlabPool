@@ -49,7 +49,7 @@ namespace MatlabPool
                     if (stop)
                         break;
 
-                    Job job = std::move(jobs.front());
+                    Job_feval job = std::move(jobs.front());
                     jobs.pop_front();
                     job_in_progress = job.id;
 
@@ -68,7 +68,7 @@ namespace MatlabPool
                     }
                     lock_jobs.lock();
 
-                    futureMap[job_in_progress] = std::pair<Job, Future>(std::move(job), std::move(futureResult));
+                    futureMap[job_in_progress] = std::pair<Job_feval, Future>(std::move(job), std::move(futureResult));
                     job_in_progress = 0;
                     cv_future.notify_one();
                 }
@@ -133,7 +133,7 @@ namespace MatlabPool
             return engine.size();
         }
 
-        JobID submit(Job &&job) override
+        JobID submit(Job_feval &&job) override
         {
             JobID job_id = job.id;
             std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
@@ -160,7 +160,7 @@ namespace MatlabPool
             return false;
         }
 
-        Job wait(JobID id) override
+        Job_feval wait(JobID id) override
         {
             if (!exists(id))
                 throw JobNotExists(id);
@@ -201,8 +201,8 @@ namespace MatlabPool
 
         std::thread master;
 
-        std::deque<Job> jobs;                              // mutex_jobs
-        std::map<JobID, std::pair<Job, Future>> futureMap; // mutex_jobs
+        std::deque<Job_feval> jobs;                              // mutex_jobs
+        std::map<JobID, std::pair<Job_feval, Future>> futureMap; // mutex_jobs
         std::condition_variable cv_queue;
         std::condition_variable cv_worker;
         std::condition_variable cv_future;
