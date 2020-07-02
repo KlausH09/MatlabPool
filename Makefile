@@ -40,6 +40,10 @@ MEXDEFINES := -DMATLAB_MEX_FILE
 INCLUDE := -I"$(MatlabRoot)/extern/include" -I./
 CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -m64  -Wall
 
+DEFINES += -DMATLABPOOL_DISP_WORKER_OUTPUT
+DEFINES += -DMATLABPOOL_DISP_WORKER_ERROR
+
+
 # TODO !!!!!
 #CXXFLAGS += -g
 #CXXFLAGS += -O2 -fwrapv -DNDEBUG
@@ -52,15 +56,19 @@ LINKLIBS := -L"$(MatlabLibraryPath)" -llibmx -llibmex -llibmat -lm -llibmwlapack
 
 Target := test.exe
 DLL := MatlabPoolLib.$(DLLExtension)
+Depend := $(wildcard *.hpp) $(wildcard MatlabPool/*.hpp) Makefile
 
-all: $(DLL) $(Target)
+build: $(DLL) $(Target)
 
 # engine test
-$(Target): $(basename $(Target)).cpp $(wildcard *.hpp) Makefile
+$(Target): $(basename $(Target)).cpp $(Depend)
 	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
 
-$(DLL): $(basename $(DLL)).cpp $(wildcard *.hpp) Makefile
+$(DLL): $(basename $(DLL)).cpp $(Depend)
 	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
+
+test: build
+	./$(Target)
 
 clean: 
 	$(RM) .\$(Target)

@@ -4,6 +4,8 @@
 #include <memory>
 #include <sstream>
 #include <utility>
+#include <locale>
+#include <codecvt>
 
 namespace MatlabPool
 {
@@ -11,9 +13,10 @@ namespace MatlabPool
     {
     protected:
         using SBuf = std::basic_streambuf<char16_t>;
+
     public:
         std::shared_ptr<SBuf> get();
-        const char16_t* str() const;
+        std::u16string str() const;
         std::size_t size();
         bool empty();
     };
@@ -26,7 +29,7 @@ namespace MatlabPool
             return std::shared_ptr<SBuf>(nullptr);
         }
 
-        const char16_t* str() const
+        std::u16string str() const
         {
             return u"";
         }
@@ -55,19 +58,32 @@ namespace MatlabPool
     class RealStreamBuffer : public StreamBuf
     {
     public:
+        RealStreamBuffer() : stream(), buffer(stream.rdbuf(), [](SBuf *) {}) {}
 
         std::shared_ptr<SBuf> get()
         {
-            return std::shared_ptr<SBuf>(stream.rdbuf());
+            return buffer;
         }
 
-        const char16_t* str() const
+        std::u16string str() const
         {
-            return stream.str().c_str();
+            return stream.str();
         }
 
-        template <typename T>
-        RealStreamBuffer &operator<<(const T &val)
+        RealStreamBuffer &operator<<(std::size_t val)
+        {
+            static std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
+            stream << conv.from_bytes(std::to_string(val));
+            return *this;
+        }
+
+        RealStreamBuffer &operator<<(const std::u16string &val)
+        {
+            stream << val;
+            return *this;
+        }
+
+        RealStreamBuffer &operator<<(const char16_t *val)
         {
             stream << val;
             return *this;
@@ -86,11 +102,12 @@ namespace MatlabPool
 
         friend void swap(RealStreamBuffer &lhs, RealStreamBuffer &rhs)
         {
-            std::swap(rhs.stream,lhs.stream);
+            std::swap(rhs.stream, lhs.stream);
         }
 
     private:
         std::basic_ostringstream<char16_t> stream;
+        std::shared_ptr<SBuf> buffer;
     };
 
 } // namespace MatlabPool

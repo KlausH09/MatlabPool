@@ -10,7 +10,7 @@
 // TODO test mit valgrind
 // TODO test C0 ueberdeckung
 
-//#define INTENSIVE_TEST
+#define INTENSIVE_TEST
 
 void run_test()
 {
@@ -120,12 +120,17 @@ void run_test()
 
     Test::run("eval", [&]() {
         Job job(u"pwd"); 
-        pool->eval(job); // TODO
+        pool->eval(job);
+#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
+        UnexpectCondition::Assert(!job.outputBuf.str().empty(), "empty output");
+#else
+        UnexpectCondition::Assert(job.outputBuf.str().empty(), "output should be empty");
+#endif
     });
 
     Test::run("invalid job", [&]() {
         JobID id = pool->submit(Job_feval(u"sqrt", 1, {factory.createArray<double>({0}, {})}));
-        pool->wait(id); // TODO
+        Job job = pool->wait(id); // TODO
     });
 }
 

@@ -9,9 +9,6 @@
 
 #include "MatlabDataArray.hpp"
 
-//#define MATLABPOOL_DISP_WORKER_OUTPUT
-//#define MATLABPOOL_DISP_WORKER_ERROR
-
 namespace MatlabPool
 {
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT

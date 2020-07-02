@@ -200,12 +200,12 @@ namespace MatlabPool
                 future[i].get();
                 if (!outBuf[i].empty())
                 {
-                    job.outputBuf << u"============= Output Worker " << i + 1 << " ==============";
+                    job.outputBuf << u"============= Output Worker " << i + 1 << u" ==============";
                     job.outputBuf << outBuf[i].str();
                 }
                 if (!errBuf[i].empty())
                 {
-                    job.errorBuf << u"============= Error Worker " << i + 1 << " ===============";
+                    job.errorBuf << u"============= Error Worker " << i + 1 << u" ===============";
                     job.errorBuf << errBuf[i].str();
                 }
             }

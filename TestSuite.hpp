@@ -79,7 +79,30 @@ namespace TestSuite
             if (diff > tol)
                 throw UnexpectNumValue(expect, val);
         }
+    private:
+        std::string msg;
+    };
 
+    class UnexpectCondition : public TestSuiteException
+    {
+    public:
+        UnexpectCondition(const char *msg_)
+        {
+            std::ostringstream os;
+            os << "unexpect condition";
+            if(msg_)
+                os << " \"" << msg_ << "\"";
+            msg = os.str();
+        }
+        const char *what() const noexcept override
+        {
+            return msg.c_str();
+        }
+        static void Assert(bool cond, const char* msg_ = nullptr)
+        {
+            if (!cond)
+                throw UnexpectCondition(msg_);
+        }
     private:
         std::string msg;
     };
