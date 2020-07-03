@@ -11,6 +11,7 @@
 #include <exception>
 #include <sstream>
 #include <memory>
+#include <type_traits>
 
 #include "./Pool.hpp"
 #include "./Job.hpp"
@@ -25,13 +26,13 @@ namespace MatlabPool
         PoolImpl &operator=(const PoolImpl &) = delete;
 
     public:
-        PoolImpl(std::size_t n, const std::vector<std::u16string> &options)
+        PoolImpl(int n, const std::vector<std::u16string> &options)
             : stop(false),
               worker_ready(n, false),
               engine(n),
               job_in_progress(0)
         {
-            if (n == 0)
+            if (n <= 0)
                 throw EmptyPool();
 
             for (auto &e : engine)
@@ -58,7 +59,7 @@ namespace MatlabPool
                     MatlabPool::Future futureResult;
                     {
                         std::unique_lock<std::mutex> lock_worker(mutex_worker);
-                        std::size_t workerID = get_free_worker(lock_worker);
+                        int workerID = get_free_worker(lock_worker);
                         job.set_workerID(workerID);
 
                         futureResult = engine[workerID].get()->eval_job(job, [=]() {
@@ -211,14 +212,68 @@ namespace MatlabPool
             }
         }
 
+        matlab::data::StructArray get_job_status() override
+        {
+            std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
+            std::size_t n = jobs.size() + futureMap.size() + (job_in_progress ? 1 : 0);
+
+            using StatusType = std::underlying_type<JobStatus>::type;
+
+            auto jobID = factory.createArray<JobID>({n});
+            auto status = factory.createArray<StatusType>({n});
+            auto worker = factory.createArray<int>({n});
+
+            std::size_t i = 0;
+            for (const auto &j : jobs)
+            {
+                jobID[i] = j.id;
+                status[i] = static_cast<StatusType>(JobStatus::Wait);
+                worker[i] = 0;
+                ++i;
+            }
+            if (job_in_progress)
+            {
+                jobID[i] = job_in_progress;
+                status[i] = static_cast<StatusType>(JobStatus::AssignWorker);
+                worker[i] = 0;
+                ++i;
+            }
+            for (const auto &j : futureMap)
+            {
+                const auto &future = j.second.second;
+                jobID[i] = j.first;
+                if (future.valid())
+                {
+                    if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+                        status[i] = static_cast<StatusType>(JobStatus::Done);
+                    else
+                        status[i] = static_cast<StatusType>(JobStatus::InProgress);
+                }
+                else
+                {
+                    status[i] = static_cast<StatusType>(JobStatus::Error);
+                }
+                worker[i] = j.second.first.get_workerID();
+                ++i;
+            }
+            lock_jobs.unlock();
+
+            auto result = factory.createStructArray({1},{"JobID","Status","WorkerID"});
+            result[0]["JobID"] = std::move(jobID);
+            result[0]["Status"] = std::move(status);
+            result[0]["WorkerID"] = std::move(worker);
+
+            return result;
+        }
+
     private:
-        std::size_t get_free_worker(std::unique_lock<std::mutex> &lock) noexcept
+        int get_free_worker(std::unique_lock<std::mutex> &lock) noexcept
         {
             for (;;)
             {
                 for (std::size_t i = 0; i < worker_ready.size(); i++)
                     if (worker_ready[i])
-                        return i;
+                        return int(i);
 
                 cv_worker.wait(lock);
             }
@@ -239,6 +294,8 @@ namespace MatlabPool
         std::condition_variable cv_future;
         std::mutex mutex_jobs;
         std::mutex mutex_worker;
+
+        matlab::data::ArrayFactory factory;
     };
 
 } // namespace MatlabPool

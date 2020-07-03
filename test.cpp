@@ -10,7 +10,7 @@
 // TODO test mit valgrind
 // TODO test C0 ueberdeckung
 
-#define INTENSIVE_TEST
+//#define INTENSIVE_TEST
 
 void run_test()
 {
@@ -71,7 +71,7 @@ void run_test()
             i = pool->submit(Job_feval(u"pause", 0, {factory.createArray<double>({1}, {0.01})}));
 
         pool->resize(pool->size() + 2, options);
-        
+
         for (JobID i : jobid)
             pool->wait(i);
     });
@@ -82,7 +82,7 @@ void run_test()
             i = pool->submit(Job_feval(u"pause", 0, {factory.createArray<double>({1}, {0.01})}));
 
         pool->resize(pool->size() - 2, options);
-        
+
         for (JobID i : jobid)
             pool->wait(i);
     });
@@ -119,12 +119,12 @@ void run_test()
     });
 
     Test::run("eval", [&]() {
-        Job job(u"pwd"); 
+        Job job(u"pwd");
         pool->eval(job);
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         UnexpectCondition::Assert(!job.outputBuf.str().empty(), "empty output");
 #else
-        UnexpectCondition::Assert(job.outputBuf.str().empty(), "output should be empty");
+            UnexpectCondition::Assert(job.outputBuf.str().empty(), "output should be empty");
 #endif
     });
 
@@ -132,8 +132,27 @@ void run_test()
         JobID id = pool->submit(Job_feval(u"sqrt", 1, {factory.createArray<double>({0}, {})}));
         Job job = pool->wait(id); // TODO
     });
-}
 
+    Test::run("get job status", [&]() {
+        using Float = float;
+        constexpr const std::size_t N = 31;
+        std::array<JobID, N> jobid;
+        for (std::size_t i = 0; i < N; i++)
+            jobid[i] = pool->submit(Job_feval(u"sqrt", 1, {factory.createArray<Float>({1}, {Float(i)})}));
+        for (std::size_t i = 0; i < N; i++)
+        {
+            Job_feval job = pool->wait(jobid[i]);
+            UnexpectOutputSize::check(1, job.result.size());
+            matlab::data::TypedArray<Float> result = job.result[0];
+            UnexpectNumValue<Float>::check(std::sqrt(Float(i)), Float(result[0]));
+
+            auto status = pool->get_job_status();
+            UnexpectOutputSize::check(N - i - 1, status[0]["JobID"].getNumberOfElements());
+            UnexpectOutputSize::check(N - i - 1, status[0]["Status"].getNumberOfElements());
+            UnexpectOutputSize::check(N - i - 1, status[0]["WorkerID"].getNumberOfElements());
+        }
+    });
+}
 
 int main()
 {
@@ -141,11 +160,11 @@ int main()
     {
         run_test();
     }
-    catch(const std::exception& e)
+    catch (const std::exception &e)
     {
         std::cout << "Abort test: " << e.what() << std::endl;
     }
-    catch(...)
+    catch (...)
     {
         std::cout << "Abort test" << std::endl;
     }

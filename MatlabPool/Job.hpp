@@ -27,6 +27,15 @@ namespace MatlabPool
 #endif
     using JobID = std::size_t;
 
+    enum class JobStatus : uint8_t
+    {
+        Wait,
+        AssignWorker,
+        InProgress,
+        Done,
+        Error,
+    };
+
     class Job
     {
         using SBuf = std::basic_stringbuf<char16_t>;
@@ -74,11 +83,11 @@ namespace MatlabPool
     class Job_feval : public Job
     {
     public:
-        Job_feval() : Job(){};
+        Job_feval() : Job(), workerID(-1) {};
         Job_feval(std::u16string function, std::size_t nlhs, std::vector<matlab::data::Array> &&args) : Job(std::move(function)),
                                                                                                         nlhs(nlhs),
                                                                                                         args(std::move(args)),
-                                                                                                        workerID(0)
+                                                                                                        workerID(-1)
         {
         }
 
@@ -102,13 +111,13 @@ namespace MatlabPool
             std::swap(j1.workerID, j2.workerID);
         }
 
-        void set_workerID(std::size_t val) noexcept
+        void set_workerID(int val) noexcept
         {
-            workerID = val + 1;
+            workerID = val;
         }
-        ssize_t get_workerID() const noexcept
+        int get_workerID() const noexcept
         {
-            return ((ssize_t)workerID) - 1;
+            return workerID;
         }
 
     public:
@@ -117,7 +126,7 @@ namespace MatlabPool
         std::vector<matlab::data::Array> result;
 
     private:
-        std::size_t workerID;
+        int workerID;
     };
 
 } // namespace MatlabPool

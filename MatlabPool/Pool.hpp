@@ -48,6 +48,7 @@ namespace MatlabPool
         virtual bool exists(JobID id) noexcept = 0;
         virtual Job_feval wait(JobID job_id) = 0;
         virtual void eval(Job &job) = 0;
+        virtual matlab::data::StructArray get_job_status() = 0;
     };
 } // namespace MatlabPool
 
