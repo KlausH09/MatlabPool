@@ -13,9 +13,20 @@ namespace TestSuite
         inline static std::size_t count = 1;
 
     public:
-        template <typename T>
-        static void run(const std::string &description, T &&operation)
+        enum class Effort
         {
+            Small,
+            Normal,
+            Large,
+            Huge,
+        };
+        static Effort maxEffort;
+
+        template <typename T>
+        static void run(const std::string &description, Effort effort, T &&operation)
+        {
+            if(effort > maxEffort)
+                return;
             std::cout << "Test " << std::setw(2) << std::right << count++ << ": ";
             std::cout << std::setw(50) << std::left << description << " ";
             try
@@ -33,6 +44,7 @@ namespace TestSuite
             }
         }
     };
+    Test::Effort Test::maxEffort = Test::Effort::Normal;
 
     class TestSuiteException : public std::exception {};
     

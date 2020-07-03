@@ -61,6 +61,7 @@ namespace MatlabPool
                         std::unique_lock<std::mutex> lock_worker(mutex_worker);
                         int workerID = get_free_worker(lock_worker);
                         job.set_workerID(workerID);
+                        worker_ready[workerID] = false;
 
                         futureResult = engine[workerID].get()->eval_job(job, [=]() {
                             std::unique_lock<std::mutex> lock_worker(mutex_worker);
@@ -70,9 +71,16 @@ namespace MatlabPool
                     }
                     lock_jobs.lock();
 
-                    futureMap[job_in_progress] = std::pair<Job_feval, Future>(std::move(job), std::move(futureResult));
-                    job_in_progress = 0;
-                    cv_future.notify_one();
+                    if (job_in_progress)
+                    {
+                        futureMap[job_in_progress] = std::pair<Job_feval, Future>(std::move(job), std::move(futureResult));
+                        job_in_progress = 0;
+                        cv_future.notify_one();
+                    }
+                    else
+                    {
+                        futureResult.cancel();
+                    }
                 }
             });
         }
@@ -144,29 +152,12 @@ namespace MatlabPool
             return job_id;
         }
 
-        bool exists(JobID id) noexcept override
-        {
-            std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
-
-            if (id == job_in_progress)
-                return true;
-
-            for (const auto &e : jobs)
-                if (e.id == id)
-                    return true;
-
-            for (const auto &e : futureMap)
-                if (e.first == id)
-                    return true;
-
-            return false;
-        }
-
         Job_feval wait(JobID id) override
         {
+#ifdef MATLABPOOL_AVOID_ENDLESS_WAIT
             if (!exists(id))
                 throw JobNotExists(id);
-
+#endif
             std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
 
             decltype(futureMap)::iterator it;
@@ -258,7 +249,7 @@ namespace MatlabPool
             }
             lock_jobs.unlock();
 
-            auto result = factory.createStructArray({1},{"JobID","Status","WorkerID"});
+            auto result = factory.createStructArray({1}, {"JobID", "Status", "WorkerID"});
             result[0]["JobID"] = std::move(jobID);
             result[0]["Status"] = std::move(status);
             result[0]["WorkerID"] = std::move(worker);
@@ -266,7 +257,58 @@ namespace MatlabPool
             return result;
         }
 
+        void cancel(JobID jobID) override
+        {
+            std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
+
+            // job queue
+            for (auto it_job = jobs.begin(); it_job != jobs.end(); ++it_job)
+            {
+                if (it_job->id == jobID)
+                {
+                    jobs.erase(it_job);
+                    return;
+                }
+            }
+
+            // next assigned job
+            if (jobID == job_in_progress)
+            {
+                job_in_progress = 0;
+                return;
+            }
+
+            // finished jobs or in progress
+            decltype(futureMap)::iterator it_future;
+            if ((it_future = futureMap.find(jobID)) != futureMap.end())
+            {
+                futureMap[jobID].second.cancel();
+                futureMap.erase(it_future);
+                return;
+            }
+
+            throw JobNotExists(jobID);
+        }
+
     private:
+        bool exists(JobID id) noexcept
+        {
+            std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
+
+            if (id == job_in_progress)
+                return true;
+
+            for (const auto &e : jobs)
+                if (e.id == id)
+                    return true;
+
+            for (const auto &e : futureMap)
+                if (e.first == id)
+                    return true;
+
+            return false;
+        }
+
         int get_free_worker(std::unique_lock<std::mutex> &lock) noexcept
         {
             for (;;)
