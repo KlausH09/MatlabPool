@@ -37,7 +37,7 @@ endif
 # Compiler Settings
 DEFINES := -DMATLAB_DEFAULT_RELEASE=R2017b -DUSE_MEX_CMD
 MEXDEFINES := -DMATLAB_MEX_FILE
-INCLUDE := -I"$(MatlabRoot)/extern/include" -I./
+INCLUDE := -I"$(MatlabRoot)/extern/include" -I./src -I./src/MatlabPool
 CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -m64  -Wall
 
 DEFINES += -DMATLABPOOL_DISP_WORKER_OUTPUT
@@ -62,10 +62,10 @@ Depend := $(wildcard *.hpp) $(wildcard MatlabPool/*.hpp) Makefile
 build: $(DLL) $(Target)
 
 # engine test
-$(Target): $(basename $(Target)).cpp $(Depend)
+$(Target): ./src/$(basename $(Target)).cpp $(Depend)
 	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
 
-$(DLL): $(basename $(DLL)).cpp $(Depend)
+$(DLL): ./src/$(basename $(DLL)).cpp $(Depend)
 	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
 
 test: build

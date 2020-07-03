@@ -172,6 +172,7 @@ void run_test()
 
 int main()
 {
+    std::cout << "======================== Start Test ==========================" << std::endl;
     try
     {
         run_test();
@@ -184,5 +185,6 @@ int main()
     {
         std::cout << "Abort test" << std::endl;
     }
+    std::cout << "========================= End Test ===========================" << std::endl;
     return 0;
 }
