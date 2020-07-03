@@ -54,6 +54,7 @@
         "codecvt": "cpp",
         "complex": "cpp",
         "forward_list": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "iomanip": "cpp"
     }
 }

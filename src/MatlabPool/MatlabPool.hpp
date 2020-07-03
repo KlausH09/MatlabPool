@@ -3,5 +3,6 @@
 
 #include "MatlabPool/Job.hpp"
 #include "MatlabPool/Pool.hpp"
+#include "MatlabPool/LibLoader.hpp"
 
-#endif
+#endif 
