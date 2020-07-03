@@ -152,7 +152,7 @@ namespace MatlabPool
             return job_id;
         }
 
-        Job_feval wait(JobID id) override
+        Job_feval wait(JobID id) override // TODO: check error result
         {
 #ifdef MATLABPOOL_AVOID_ENDLESS_WAIT
             if (!exists(id))
@@ -254,6 +254,22 @@ namespace MatlabPool
             result[0]["Status"] = std::move(status);
             result[0]["WorkerID"] = std::move(worker);
 
+            return result;
+        }
+
+        matlab::data::StructArray get_worker_status() override
+        {
+            std::unique_lock<std::mutex> lock_worker(mutex_worker);
+            std::size_t n = engine.size();
+
+            auto ready = factory.createArray<bool>({n});
+            for (std::size_t i = 0; i < n; i++)
+                ready[i] = worker_ready[i];
+            
+            lock_worker.unlock();
+
+            auto result = factory.createStructArray({1}, {"Ready"});
+            result[0]["Ready"] = std::move(ready);
             return result;
         }
 
