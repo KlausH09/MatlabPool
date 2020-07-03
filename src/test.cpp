@@ -21,7 +21,7 @@ void run_test()
     //Test::maxEffort = Effort::Large;
     Test::maxEffort = Effort::Huge;
 
-    const std::size_t nof_worker = 2;
+    const unsigned int nof_worker = 2;
     std::vector<std::u16string> options = {u"-nojvm", u"-nosplash"};
 
     auto pool_guard = std::unique_ptr<Pool>(LibLoader::createPool(nof_worker, options));

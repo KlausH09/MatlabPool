@@ -42,7 +42,7 @@ namespace MatlabPool
         };
 
         virtual ~Pool(){}
-        virtual void resize(std::size_t n_new, const std::vector<std::u16string> &options) = 0;
+        virtual void resize(unsigned int n_new, const std::vector<std::u16string> &options) = 0;
         virtual std::size_t size() const = 0;
         virtual JobID submit(Job_feval &&job) = 0;
         virtual Job_feval wait(JobID job_id) = 0;

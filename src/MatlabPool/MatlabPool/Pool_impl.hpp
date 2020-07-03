@@ -26,13 +26,13 @@ namespace MatlabPool
         PoolImpl &operator=(const PoolImpl &) = delete;
 
     public:
-        PoolImpl(int n, const std::vector<std::u16string> &options)
+        PoolImpl(unsigned int n, const std::vector<std::u16string> &options)
             : stop(false),
               worker_ready(n, false),
               engine(n),
               job_in_progress(0)
         {
-            if (n <= 0)
+            if (n == 0)
                 throw EmptyPool();
 
             for (auto &e : engine)
@@ -102,7 +102,7 @@ namespace MatlabPool
             }
         }
 
-        void resize(std::size_t n_new, const std::vector<std::u16string> &options) override
+        void resize(unsigned int n_new, const std::vector<std::u16string> &options) override
         {
             if (n_new == 0)
                 throw EmptyPool();
