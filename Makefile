@@ -55,22 +55,26 @@ LDTYPE := -shared -static -s
 LINKLIBS := -L"$(MatlabLibraryPath)" -llibmx -llibmex -llibmat -lm -llibmwlapack -llibmwblas -llibMatlabDataArray -llibMatlabEngine 
 
 
-Target := test.exe
+Test := test.exe
 DLL := MatlabPoolLib.$(DLLExtension)
-Depend := $(wildcard *.hpp) $(wildcard MatlabPool/*.hpp) Makefile
+MEX := MatlabPool.$(MEXExtension)
 
-build: $(DLL) $(Target)
+build: $(DLL) $(Test) $(MEX)
 
 # engine test
-$(Target): ./src/$(basename $(Target)).cpp $(Depend)
+$(Test): ./src/$(basename $(Test)).cpp
 	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
 
-$(DLL): ./src/$(basename $(DLL)).cpp $(Depend)
+$(DLL): ./src/$(basename $(DLL)).cpp
 	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
 
+$(MEX): ./src/MatlabPoolMEX.cpp
+	$(CXX) -o $@ $(DEFINES) $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
+
 test: build
-	./$(Target)
+	./$(Test)
 
 clean: 
-	$(RM) .\$(Target)
+	$(RM) .\$(MEX)
+	$(RM) .\$(Test)
 	$(RM) .\$(DLL)
