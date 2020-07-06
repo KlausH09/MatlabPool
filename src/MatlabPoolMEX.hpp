@@ -75,11 +75,11 @@ public:
 
     MexFunction()
     {
-        mexLock();
+        //mexLock();
     }
     ~MexFunction()
     {
-        mexUnlock();
+        //mexUnlock();
     }
 
     void operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs);

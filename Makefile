@@ -57,7 +57,7 @@ LINKLIBS := -L"$(MatlabLibraryPath)" -llibmx -llibmex -llibmat -lm -llibmwlapack
 
 Test := test.exe
 DLL := MatlabPoolLib.$(DLLExtension)
-MEX := MatlabPool.$(MEXExtension)
+MEX := MatlabPoolMEX.$(MEXExtension)
 
 build: $(DLL) $(Test) $(MEX)
 
@@ -68,7 +68,7 @@ $(Test): ./src/$(basename $(Test)).cpp
 $(DLL): ./src/$(basename $(DLL)).cpp
 	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
 
-$(MEX): ./src/MatlabPoolMEX.cpp
+$(MEX): ./src/$(basename $(MEX)).cpp
 	$(CXX) -o $@ $(DEFINES) $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
 
 test: build

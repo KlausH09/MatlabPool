@@ -25,7 +25,7 @@ namespace MatlabPool
     constexpr const bool disp_error_buffer = false;
     using ErrorBuf = EmptyStreamBuffer;
 #endif
-    using JobID = std::size_t;
+    using JobID = std::uint64_t;
 
     enum class JobStatus : uint8_t
     {

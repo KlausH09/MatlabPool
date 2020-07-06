@@ -72,7 +72,7 @@ void MexFunction::wait(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
 
     if (!pool)
         throw EmptyPool();
-    if (inputs.size() == 2)
+    if (inputs.size() != 2)
         throw InvalidInputSize(inputs.size());
 
     JobID jobid = get_scalar<JobID>(inputs[1]);
@@ -85,7 +85,7 @@ void MexFunction::statusJobs(matlab::mex::ArgumentList &outputs, matlab::mex::Ar
 {
     if (!pool)
         throw EmptyPool();
-    if (inputs.size() == 1)
+    if (inputs.size() != 1)
         throw InvalidInputSize(inputs.size());
 
     outputs[0] = pool->get_job_status();
@@ -95,7 +95,7 @@ void MexFunction::statusWorker(matlab::mex::ArgumentList &outputs, matlab::mex::
 {
     if (!pool)
         throw EmptyPool();
-    if (inputs.size() == 1)
+    if (inputs.size() != 1)
         throw InvalidInputSize(inputs.size());
 
     outputs[0] = pool->get_worker_status();
@@ -105,7 +105,7 @@ void MexFunction::eval(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
 {
     if (!pool)
         throw EmptyPool();
-    if (inputs.size() == 2)
+    if (inputs.size() != 2)
         throw InvalidInputSize(inputs.size());
 
     MatlabPool::Job job(get_string(inputs[1]));
@@ -117,7 +117,7 @@ void MexFunction::cancel(matlab::mex::ArgumentList &outputs, matlab::mex::Argume
 {
     if (!pool)
         throw EmptyPool();
-    if (inputs.size() == 2)
+    if (inputs.size() != 2)
         throw InvalidInputSize(inputs.size());
 
     pool->cancel(get_scalar<MatlabPool::JobID>(inputs[1]));

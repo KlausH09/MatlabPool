@@ -173,7 +173,7 @@ namespace MatlabPool
             return std::move(tmp.first);
         }
 
-        void eval(Job &job) override
+        void eval(Job &job) override // TODO: check error result
         {
             std::lock_guard<std::mutex> lock_worker(mutex_worker);
 
