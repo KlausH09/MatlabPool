@@ -166,7 +166,7 @@ namespace MatlabPool
 
         Job wait(JobID id) override
         {
-#ifdef MATLABPOOL_AVOID_ENDLESS_WAIT
+#ifdef MATLABPOOL_CHECK_EXIST_BEFORE_WAIT
             if (!exists(id))
                 throw JobNotExists(id);
 #endif

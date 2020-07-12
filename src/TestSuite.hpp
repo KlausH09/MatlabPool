@@ -33,7 +33,7 @@ namespace TestSuite
             }
             catch (std::exception &e)
             {
-                std::cout << "exception: " << e.what() << std::endl;
+                std::cout << e.what() << std::endl;
             }
             catch (...)
             {
@@ -132,7 +132,7 @@ namespace TestSuite
         UnexpectException()
         {
             std::ostringstream os;
-            os << "expect exception but there was not one";
+            os << "expect exception but there wasn't one";
             msg = os.str();
         }
         UnexpectException(const std::exception &e)

@@ -35,18 +35,6 @@ namespace MatlabPool
         JobBase &operator=(const JobBase &) = delete;
 
     public:
-        enum class Status : uint8_t
-        {
-            Wait,
-            AssignToWorker,
-            InProgress,
-            Done,
-            Error,
-            Canceled,
-            DoneEmpty,
-            Empty,
-        };
-
         class Exception : public std::exception
         {
         };
@@ -67,13 +55,11 @@ namespace MatlabPool
         private:
             std::string msg;
         };
-        
 
     protected:
-        JobBase() noexcept : id(0), status(Status::Empty){};
-        JobBase(std::u16string cmd, Status status) : id(id_count++),
-                                                     cmd(std::move(cmd)),
-                                                     status(status)
+        JobBase() noexcept : id(0){};
+        JobBase(std::u16string cmd) : id(id_count++),
+                                      cmd(std::move(cmd))
         {
         }
 
@@ -96,8 +82,6 @@ namespace MatlabPool
 
             std::swap(j1.outputBuf, j2.outputBuf);
             std::swap(j1.errorBuf, j2.errorBuf);
-
-            std::swap(j1.status, j2.status);
         }
 
         JobID get_ID() const noexcept
@@ -117,19 +101,12 @@ namespace MatlabPool
             return errorBuf;
         }
 
-        Status get_status() const noexcept
-        {
-            return status;
-        }
-
     protected:
         JobID id;
         std::u16string cmd;
 
         OutputBuf outputBuf;
         ErrorBuf errorBuf;
-
-        Status status;
 
     private:
         inline static JobID id_count = 1;

@@ -8,10 +8,17 @@ namespace MatlabPool
 
     class JobEval : public JobBase
     {
+    public:
+        enum class Status : uint8_t
+        {
+            Empty,
+            NoError,
+            Error,
+        };
 
     public:
-        JobEval() : JobBase() {}
-        JobEval(std::u16string cmd) : JobBase(cmd, Status::Wait) {}
+        JobEval() : JobBase(), status(Status::Empty) {}
+        JobEval(std::u16string cmd) : JobBase(cmd),  status(Status::NoError) {}
 
         JobEval(JobEval &&other) noexcept : JobEval()
         {
@@ -28,6 +35,7 @@ namespace MatlabPool
         {
             using std::swap;
             swap(static_cast<JobBase &>(j1), static_cast<JobBase &>(j2));
+            swap(j1.status,j2.status);
         }
 
         void add_error(ErrorBuf &buf, std::size_t workerID)
@@ -52,6 +60,14 @@ namespace MatlabPool
                 outputBuf << buf.str();
             }
         }
+
+        Status get_status() const noexcept
+        {
+            return status;
+        }
+
+        private:
+            Status status;
     };
 
 } // namespace MatlabPool

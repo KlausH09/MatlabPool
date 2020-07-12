@@ -45,6 +45,8 @@ void run_test()
             UnexpectOutputSize::check(1, job.peek_result().size());
             matlab::data::TypedArray<Float> result = job.peek_result()[0];
             UnexpectNumValue<Float>::check(std::sqrt(Float(i)), Float(result[0]));
+            UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
+            UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
         }
         for (auto e : worker_used)
             UnexpectCondition::Assert(e, "unused worker");
@@ -116,17 +118,59 @@ void run_test()
         JobEval job(u"pwd");
         pool->eval(job);
 
-        // TODO
+        UnexpectCondition::Assert(job.get_status() == JobEval::Status::NoError, "error in at least one worker");
+        UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-        //UnexpectCondition::Assert(!job.outputBuf.str().empty(), "empty output");
+        UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
 #else
-        //UnexpectCondition::Assert(job.outputBuf.str().empty(), "output should be empty");
+        UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
+#endif
+    });
+
+    Test::run("jobs and eval", Effort::Normal, [&]() {
+        using Float = double;
+        constexpr const std::size_t N = 31;
+        std::array<JobID, N> jobid;
+        for (std::size_t i = 0; i < N; i++)
+            jobid[i] = pool->submit(Job(u"sqrt", 1, {factory.createScalar<Float>(Float(i))}));
+
+        JobEval job_eval(u"pwd");
+        pool->eval(job_eval);
+
+        for (std::size_t i = 0; i < N; i++)
+            pool->wait(jobid[i]);
+    });
+
+    Test::run("invalid eval", Effort::Normal, [&]() {
+        JobEval job(u"pwwd");
+        pool->eval(job);
+
+        UnexpectCondition::Assert(job.get_status() == JobEval::Status::Error, "there was no error during \"eval\"");
+        UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
+#ifdef MATLABPOOL_DISP_WORKER_ERROR
+        UnexpectCondition::Assert(!job.get_errBuf().empty(), "empty error buffer");
+#else
+            UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
 #endif
     });
 
     Test::run("invalid job", Effort::Normal, [&]() {
-        JobID id = pool->submit(Job(u"sqrt", 1, {factory.createArray<double>({0})}));
-        Job job = pool->wait(id); // TODO
+        JobID id = pool->submit(Job(u"sqqqqrt", 1, {factory.createArray<double>({0})}));
+
+        UnexpectException<JobBase::ExecutionError>::check([&]() {
+            pool->wait(id);
+        });
+    });
+
+    Test::run("job with disp", Effort::Normal, [&]() {
+        JobID id = pool->submit(Job(u"disp", 1, {factory.createCharArray("Hello World!")}));
+        Job job = pool->wait(id);
+#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
+        UnexpectCondition::Assert(!job.get_outBuf().empty(), "output buffer should not be empty");
+#else
+        UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
+#endif
+        UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
     });
 
     Test::run("get job status", Effort::Large, [&]() {
