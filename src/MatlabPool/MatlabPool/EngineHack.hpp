@@ -24,7 +24,7 @@ namespace MatlabPool
     public:
         EngineHack(const std::vector<std::u16string> &options) : matlab::engine::MATLABEngine(start_matlabasync(options).get()) {}
 
-        Future eval_job(Job_feval &job, Notifier &&notifier)
+        void eval_job(Job_future &job, Notifier &&notifier)
         {
             using namespace matlab::execution;
 
@@ -55,8 +55,7 @@ namespace MatlabPool
                                                                 p_hack, output, error,
                                                                 &writeToStreamBuffer,
                                                                 &deleteStreamBufferImpl);
-
-            return FutureResult<std::vector<matlab::data::Array>>(std::move(f), std::make_shared<TaskReference>(handle, cpp_engine_cancel_feval_with_completion));
+            job.set_future(FutureResult<std::vector<matlab::data::Array>>(std::move(f), std::make_shared<TaskReference>(handle, cpp_engine_cancel_feval_with_completion)));
         }
 
     private:

@@ -10,22 +10,19 @@ namespace TestSuite
 {
     class Test
     {
-        inline static std::size_t count = 1;
-
     public:
         enum class Effort
         {
             Small,
             Normal,
             Large,
-            Huge,
+            Huge
         };
-        static Effort maxEffort;
 
         template <typename T>
         static void run(const std::string &description, Effort effort, T &&operation)
         {
-            if(effort > maxEffort)
+            if (effort > maxEffort)
                 return;
             std::cout << "Test " << std::setw(2) << std::right << count++ << ": ";
             std::cout << std::setw(50) << std::left << description << " ";
@@ -43,11 +40,18 @@ namespace TestSuite
                 std::cout << "unknown exception" << std::endl;
             }
         }
-    };
-    Test::Effort Test::maxEffort = Test::Effort::Normal;
 
-    class TestSuiteException : public std::exception {};
-    
+    public:
+        inline static Effort maxEffort = Test::Effort::Normal;
+
+    private:
+        inline static std::size_t count = 1;
+    };
+
+    class TestSuiteException : public std::exception
+    {
+    };
+
     class UnexpectOutputSize : public TestSuiteException
     {
     public:
@@ -91,6 +95,7 @@ namespace TestSuite
             if (diff > tol)
                 throw UnexpectNumValue(expect, val);
         }
+
     private:
         std::string msg;
     };
@@ -102,7 +107,7 @@ namespace TestSuite
         {
             std::ostringstream os;
             os << "unexpect condition";
-            if(msg_)
+            if (msg_)
                 os << " \"" << msg_ << "\"";
             msg = os.str();
         }
@@ -110,11 +115,12 @@ namespace TestSuite
         {
             return msg.c_str();
         }
-        static void Assert(bool cond, const char* msg_ = nullptr)
+        static void Assert(bool cond, const char *msg_ = nullptr)
         {
             if (!cond)
                 throw UnexpectCondition(msg_);
         }
+
     private:
         std::string msg;
     };

@@ -12,9 +12,11 @@
 #include <sstream>
 #include <memory>
 #include <type_traits>
+#include <iomanip>
 
 #include "./Pool.hpp"
 #include "./Job.hpp"
+#include "./Job_future.hpp"
 #include "./EngineHack.hpp"
 
 namespace MatlabPool
@@ -50,20 +52,18 @@ namespace MatlabPool
                     if (stop)
                         break;
 
-                    Job_feval job = std::move(jobs.front());
+                    Job_future job(std::move(jobs.front()));
                     jobs.pop_front();
                     job_in_progress = job.id;
 
                     lock_jobs.unlock(); // do not block adding new jobs
-
-                    MatlabPool::Future futureResult;
                     {
                         std::unique_lock<std::mutex> lock_worker(mutex_worker);
                         int workerID = get_free_worker(lock_worker);
                         job.set_workerID(workerID);
                         worker_ready[workerID] = false;
 
-                        futureResult = engine[workerID].get()->eval_job(job, [=]() {
+                        engine[workerID].get()->eval_job(job, [=]() {
                             std::unique_lock<std::mutex> lock_worker(mutex_worker);
                             worker_ready[workerID] = true;
                             cv_worker.notify_one();
@@ -73,13 +73,13 @@ namespace MatlabPool
 
                     if (job_in_progress)
                     {
-                        futureMap[job_in_progress] = std::pair<Job_feval, Future>(std::move(job), std::move(futureResult));
+                        futureMap[job_in_progress] = std::move(job);
                         job_in_progress = 0;
                         cv_future.notify_one();
                     }
                     else
                     {
-                        futureResult.cancel();
+                        job.cancel();
                     }
                 }
             });
@@ -98,7 +98,7 @@ namespace MatlabPool
             {
                 std::unique_lock<std::mutex> lock(mutex_jobs);
                 for (auto &e : futureMap)
-                    e.second.second.cancel(true);
+                    e.second.cancel();
             }
         }
 
@@ -143,7 +143,7 @@ namespace MatlabPool
             return engine.size();
         }
 
-        JobID submit(Job_feval &&job) override
+        JobID submit(Job &&job) override
         {
             JobID job_id = job.id;
             std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
@@ -152,7 +152,7 @@ namespace MatlabPool
             return job_id;
         }
 
-        Job_feval wait(JobID id) override // TODO: check error result
+        Job wait(JobID id) override // TODO: check error result
         {
 #ifdef MATLABPOOL_AVOID_ENDLESS_WAIT
             if (!exists(id))
@@ -166,41 +166,56 @@ namespace MatlabPool
                 cv_future.wait(lock_jobs);
             }
 
-            auto tmp = std::move(futureMap[id]);
-            futureMap.erase(it);
+            auto job = std::move(futureMap[id]);
 
-            tmp.first.result = tmp.second.get();
-            return std::move(tmp.first);
+            futureMap.erase(it);
+            job.get_futureResult();
+
+            return job;
         }
 
-        void eval(Job &job) override // TODO: check error result
+        bool eval(const std::u16string &cmd) override // TODO: check error result
         {
+            bool error = false;
             std::lock_guard<std::mutex> lock_worker(mutex_worker);
 
-            std::vector<OutputBuf> outBuf(engine.size());
-            std::vector<ErrorBuf> errBuf(engine.size());
+            std::vector<OutputBuf> outBuf_vec(engine.size());
+            std::vector<ErrorBuf> errBuf_vec(engine.size());
+
+            OutputBuf outBuf;
+            ErrorBuf errBuf;
 
             std::vector<matlab::engine::FutureResult<void>> future(engine.size());
 
             for (std::size_t i = 0; i < engine.size(); i++)
             {
-                future[i] = engine[i]->evalAsync(job.function, outBuf[i].get(), errBuf[i].get());
+                future[i] = engine[i]->evalAsync(cmd, outBuf_vec[i].get(), errBuf_vec[i].get());
             }
 
             for (std::size_t i = 0; i < engine.size(); i++)
             {
-                future[i].get();
-                if (!outBuf[i].empty())
+                try
                 {
-                    job.outputBuf << u"============= Output Worker " << i + 1 << u" ==============";
-                    job.outputBuf << outBuf[i].str();
+                    future[i].get();
                 }
-                if (!errBuf[i].empty())
+                catch (const matlab::engine::Exception &e)
                 {
-                    job.errorBuf << u"============= Error Worker " << i + 1 << u" ===============";
-                    job.errorBuf << errBuf[i].str();
+                    error = true;
+                    errBuf << u"============= Error Worker " << i + 1 << u" ===============\n";
+                    errBuf << std::move(errBuf_vec[i].str());
+                    errBuf << std::u16string(45, '=') << u"\n";
+                }
+
+                if (!outBuf_vec[i].empty())
+                {
+                    outBuf << u"============= Output Worker " << i + 1 << u" ==============\n";
+                    outBuf << std::move(outBuf_vec[i].str());
+                    outBuf << std::u16string(45, '=') << u"\n";
                 }
             }
+
+            // TODO outbuf, errbuf
+            return error;
         }
 
         matlab::data::StructArray get_job_status() override
@@ -231,20 +246,9 @@ namespace MatlabPool
             }
             for (const auto &j : futureMap)
             {
-                const auto &future = j.second.second;
                 jobID[i] = j.first;
-                if (future.valid())
-                {
-                    if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
-                        status[i] = static_cast<StatusType>(JobStatus::Done);
-                    else
-                        status[i] = static_cast<StatusType>(JobStatus::InProgress);
-                }
-                else
-                {
-                    status[i] = static_cast<StatusType>(JobStatus::Error);
-                }
-                worker[i] = j.second.first.get_workerID();
+                status[i] = static_cast<StatusType>(j.second.get_JobStatus());
+                worker[i] = j.second.get_workerID();
                 ++i;
             }
             lock_jobs.unlock();
@@ -265,7 +269,7 @@ namespace MatlabPool
             auto ready = factory.createArray<bool>({n});
             for (std::size_t i = 0; i < n; i++)
                 ready[i] = worker_ready[i];
-            
+
             lock_worker.unlock();
 
             auto result = factory.createStructArray({1}, {"Ready"});
@@ -298,7 +302,7 @@ namespace MatlabPool
             decltype(futureMap)::iterator it_future;
             if ((it_future = futureMap.find(jobID)) != futureMap.end())
             {
-                futureMap[jobID].second.cancel();
+                futureMap[jobID].cancel();
                 futureMap.erase(it_future);
                 return;
             }
@@ -345,8 +349,8 @@ namespace MatlabPool
 
         std::thread master;
 
-        std::deque<Job_feval> jobs;                              // mutex_jobs
-        std::map<JobID, std::pair<Job_feval, Future>> futureMap; // mutex_jobs
+        std::deque<Job> jobs;                  // mutex_jobs
+        std::map<JobID, Job_future> futureMap; // mutex_jobs
         std::condition_variable cv_queue;
         std::condition_variable cv_worker;
         std::condition_variable cv_future;

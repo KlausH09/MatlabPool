@@ -36,6 +36,7 @@ namespace MatlabPool
         Error,
     };
 
+
     class Job
     {
         using SBuf = std::basic_stringbuf<char16_t>;
@@ -44,70 +45,40 @@ namespace MatlabPool
         Job &operator=(const Job &) = delete;
 
     public:
-        Job() noexcept : id(0) {}
-
-        Job(std::u16string function)
-            : id(id_count++),
-              function(std::move(function))
-        {}
+        Job() noexcept : id(0), workerID(-1){};
+        Job(std::u16string function, std::size_t nlhs, std::vector<matlab::data::Array> &&args) : id(id_count++),
+                                                                                                  function(std::move(function)),
+                                                                                                  nlhs(nlhs),
+                                                                                                  args(std::move(args)),
+                                                                                                  workerID(-1)
+        {
+        }
 
         Job(Job &&other) noexcept : Job()
         {
+            using std::swap;
             swap(*this, other);
         }
 
         Job &operator=(Job &&other) noexcept
         {
+            using std::swap;
             swap(*this, other);
             return *this;
         }
 
-        void swap(Job &j1, Job &j2) noexcept
+        friend void swap(Job &j1, Job &j2) noexcept
         {
             std::swap(j1.id, j2.id);
             std::swap(j1.function, j2.function);
 
-            std::swap(j1.outputBuf, j2.outputBuf);
-            std::swap(j1.errorBuf, j2.errorBuf);
-        }
-
-    public: // TODO
-        inline static JobID id_count = 1;
-        JobID id;
-        std::u16string function;
-
-        OutputBuf outputBuf;
-        ErrorBuf errorBuf;
-    };
-
-    class Job_feval : public Job
-    {
-    public:
-        Job_feval() : Job(), workerID(-1) {};
-        Job_feval(std::u16string function, std::size_t nlhs, std::vector<matlab::data::Array> &&args) : Job(std::move(function)),
-                                                                                                        nlhs(nlhs),
-                                                                                                        args(std::move(args)),
-                                                                                                        workerID(-1)
-        {
-        }
-
-        Job_feval(Job_feval &&other) noexcept : Job_feval()
-        {
-            swap(*this, other);
-        }
-
-        Job_feval &operator=(Job_feval &&other) noexcept
-        {
-            swap(*this, other);
-            return *this;
-        }
-
-        void swap(Job_feval &j1, Job_feval &j2) noexcept
-        {
-            Job::swap(j1,j2);
             std::swap(j1.nlhs, j2.nlhs);
             std::swap(j1.args, j2.args);
             std::swap(j1.result, j2.result);
+
+            std::swap(j1.outputBuf, j2.outputBuf);
+            std::swap(j1.errorBuf, j2.errorBuf);
+
             std::swap(j1.workerID, j2.workerID);
         }
 
@@ -121,11 +92,18 @@ namespace MatlabPool
         }
 
     public:
+        JobID id;
+        std::u16string function;
+
         std::size_t nlhs;
         std::vector<matlab::data::Array> args;
         std::vector<matlab::data::Array> result;
 
+        OutputBuf outputBuf;
+        ErrorBuf errorBuf;
+
     private:
+        inline static JobID id_count = 1;
         int workerID;
     };
 

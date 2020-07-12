@@ -25,7 +25,7 @@ void MexFunction::operator()(matlab::mex::ArgumentList outputs, matlab::mex::Arg
            << e.what();
         throwError(os.str());
     }
-    catch(...)
+    catch (...)
     {
         std::ostringstream os;
         os << "error in MatlabPoolMex::" << MexCommands::get_name(id) << "()";
@@ -60,9 +60,9 @@ void MexFunction::submit(matlab::mex::ArgumentList &outputs, matlab::mex::Argume
     if (inputs.size() < 3)
         throw InvalidInputSize(inputs.size());
 
-    JobID jobid = pool->submit(Job_feval(get_string(inputs[1]),
-                                         get_scalar<std::size_t>(inputs[2]),
-                                         {inputs.begin() + 3, inputs.end()}));
+    JobID jobid = pool->submit(Job(get_string(inputs[1]),
+                                   get_scalar<std::size_t>(inputs[2]),
+                                   {inputs.begin() + 3, inputs.end()}));
     outputs[0] = factory.createScalar<JobID>(jobid);
 }
 
@@ -76,7 +76,7 @@ void MexFunction::wait(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
         throw InvalidInputSize(inputs.size());
 
     JobID jobid = get_scalar<JobID>(inputs[1]);
-    Job_feval job = pool->wait(jobid);
+    Job job = pool->wait(jobid);
 
     // TODO
 }
@@ -108,8 +108,8 @@ void MexFunction::eval(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
     if (inputs.size() != 2)
         throw InvalidInputSize(inputs.size());
 
-    MatlabPool::Job job(get_string(inputs[1]));
-    pool->eval(job);
+    std::u16string cmd{get_string(inputs[1])};
+    pool->eval(cmd);
 
     // TODO
 }

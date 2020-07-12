@@ -23,7 +23,8 @@
                 "./src/MatlabPool",
                 "C:\\ProgramData\\MATLAB\\SupportPackages\\R2019b\\3P.instrset\\mingw_w64.instrset\\x86_64-w64-mingw32\\include"
             ],
-            "cppStandard": "c++17"
+            "cStandard": "c11",
+            "cppStandard": "gnu++17"
         }
     ],
     "version": 4

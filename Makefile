@@ -78,3 +78,9 @@ clean:
 	$(RM) .\$(MEX)
 	$(RM) .\$(Test)
 	$(RM) .\$(DLL)
+
+
+# TODO
+ttest.exe: ttest.cpp
+	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
+	./ttest.exe

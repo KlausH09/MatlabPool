@@ -44,9 +44,9 @@ namespace MatlabPool
         virtual ~Pool(){}
         virtual void resize(unsigned int n_new, const std::vector<std::u16string> &options) = 0;
         virtual std::size_t size() const = 0;
-        virtual JobID submit(Job_feval &&job) = 0;
-        virtual Job_feval wait(JobID job_id) = 0;
-        virtual void eval(Job &job) = 0;
+        virtual JobID submit(Job &&job) = 0;
+        virtual Job wait(JobID job_id) = 0;
+        virtual bool eval(const std::u16string& cmd) = 0;
         virtual matlab::data::StructArray get_job_status() = 0;
         virtual matlab::data::StructArray get_worker_status() = 0;
         virtual void cancel(JobID jobID) = 0;
