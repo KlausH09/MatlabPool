@@ -16,8 +16,9 @@
 
 #include "./Pool.hpp"
 #include "./Job.hpp"
-#include "./Job_future.hpp"
+#include "./JobFuture.hpp"
 #include "./EngineHack.hpp"
+#include "assert.hpp"
 
 namespace MatlabPool
 {
@@ -52,34 +53,45 @@ namespace MatlabPool
                     if (stop)
                         break;
 
-                    Job_future job(std::move(jobs.front()));
-                    jobs.pop_front();
-                    job_in_progress = job.id;
+                    JobFuture &job = jobs.front();
+                    job.set_AssignToWorker_status();
 
+                    int workerID;
+                    MatlabPool::EngineHack *worker;
+
+                    // wait for next free worker
                     lock_jobs.unlock(); // do not block adding new jobs
                     {
                         std::unique_lock<std::mutex> lock_worker(mutex_worker);
-                        int workerID = get_free_worker(lock_worker);
-                        job.set_workerID(workerID);
+                        workerID = get_free_worker(lock_worker);
                         worker_ready[workerID] = false;
+                        worker = engine[workerID].get();
+                    }
+                    lock_jobs.lock();
 
-                        engine[workerID].get()->eval_job(job, [=]() {
+                    // check if job is canceled during waitting
+                    if (job.get_status() == Job::Status::Canceled)
+                    {
+                        jobs.pop_front();
+                        std::unique_lock<std::mutex> lock_worker(mutex_worker);
+                        worker_ready[workerID] = true;
+                    }
+                    else if (job.get_status() == Job::Status::AssignToWorker)
+                    {
+                        job.set_workerID(workerID); // set also job status to "InProgress"
+                        worker->eval_job(job, [=]() {
                             std::unique_lock<std::mutex> lock_worker(mutex_worker);
                             worker_ready[workerID] = true;
                             cv_worker.notify_one();
                         });
-                    }
-                    lock_jobs.lock();
-
-                    if (job_in_progress)
-                    {
-                        futureMap[job_in_progress] = std::move(job);
-                        job_in_progress = 0;
+                        JobID id_tmp = job.get_ID();
+                        futureMap[id_tmp] = std::move(job);
+                        jobs.pop_front();
                         cv_future.notify_one();
                     }
                     else
                     {
-                        job.cancel();
+                        ERROR("unexpect job status");
                     }
                 }
             });
@@ -145,9 +157,9 @@ namespace MatlabPool
 
         JobID submit(Job &&job) override
         {
-            JobID job_id = job.id;
+            JobID job_id = job.get_ID();
             std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
-            jobs.push_back(std::move(job));
+            jobs.push_back(JobFuture(std::move(job)));
             cv_queue.notify_one();
             return job_id;
         }
@@ -169,7 +181,7 @@ namespace MatlabPool
             auto job = std::move(futureMap[id]);
 
             futureMap.erase(it);
-            job.get_futureResult();
+            job.wait();
 
             return job;
         }
@@ -221,9 +233,9 @@ namespace MatlabPool
         matlab::data::StructArray get_job_status() override
         {
             std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
-            std::size_t n = jobs.size() + futureMap.size() + (job_in_progress ? 1 : 0);
+            std::size_t n = jobs.size() + futureMap.size();
 
-            using StatusType = std::underlying_type<JobStatus>::type;
+            using StatusType = std::underlying_type<Job::Status>::type;
 
             auto jobID = factory.createArray<JobID>({n});
             auto status = factory.createArray<StatusType>({n});
@@ -232,22 +244,15 @@ namespace MatlabPool
             std::size_t i = 0;
             for (const auto &j : jobs)
             {
-                jobID[i] = j.id;
-                status[i] = static_cast<StatusType>(JobStatus::Wait);
-                worker[i] = 0;
-                ++i;
-            }
-            if (job_in_progress)
-            {
-                jobID[i] = job_in_progress;
-                status[i] = static_cast<StatusType>(JobStatus::AssignWorker);
-                worker[i] = 0;
+                jobID[i] = j.get_ID();
+                status[i] = static_cast<StatusType>(j.get_status());
+                worker[i] = j.get_workerID();
                 ++i;
             }
             for (const auto &j : futureMap)
             {
-                jobID[i] = j.first;
-                status[i] = static_cast<StatusType>(j.second.get_JobStatus());
+                jobID[i] = j.second.get_ID();
+                status[i] = static_cast<StatusType>(j.second.get_status());
                 worker[i] = j.second.get_workerID();
                 ++i;
             }
@@ -284,18 +289,16 @@ namespace MatlabPool
             // job queue
             for (auto it_job = jobs.begin(); it_job != jobs.end(); ++it_job)
             {
-                if (it_job->id == jobID)
+                if (it_job->get_ID() == jobID)
                 {
-                    jobs.erase(it_job);
+                    if (it_job->get_status() == Job::Status::AssignToWorker)
+                        it_job->cancel();
+                    else if (it_job->get_status() == Job::Status::Wait)
+                        jobs.erase(it_job);
+                    else
+                        ERROR("unexpect job status");
                     return;
                 }
-            }
-
-            // next assigned job
-            if (jobID == job_in_progress)
-            {
-                job_in_progress = 0;
-                return;
             }
 
             // finished jobs or in progress
@@ -315,11 +318,8 @@ namespace MatlabPool
         {
             std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
 
-            if (id == job_in_progress)
-                return true;
-
             for (const auto &e : jobs)
-                if (e.id == id)
+                if (e.get_ID() == id)
                     return true;
 
             for (const auto &e : futureMap)
@@ -349,8 +349,8 @@ namespace MatlabPool
 
         std::thread master;
 
-        std::deque<Job> jobs;                  // mutex_jobs
-        std::map<JobID, Job_future> futureMap; // mutex_jobs
+        std::deque<JobFuture> jobs;           // mutex_jobs
+        std::map<JobID, JobFuture> futureMap; // mutex_jobs
         std::condition_variable cv_queue;
         std::condition_variable cv_worker;
         std::condition_variable cv_future;

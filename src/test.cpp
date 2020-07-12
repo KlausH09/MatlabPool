@@ -18,8 +18,8 @@ void run_test()
     using namespace TestSuite;
     using Effort = Test::Effort;
 
-    //Test::maxEffort = Effort::Large;
-    Test::maxEffort = Effort::Huge;
+    Test::maxEffort = Effort::Large;
+    //Test::maxEffort = Effort::Huge;
 
     const unsigned int nof_worker = 2;
     std::vector<std::u16string> options = {u"-nojvm", u"-nosplash"};
@@ -42,8 +42,8 @@ void run_test()
         {
             Job job = pool->wait(jobid[i]);
             worker_used[job.get_workerID()] = true;
-            UnexpectOutputSize::check(1, job.result.size());
-            matlab::data::TypedArray<Float> result = job.result[0];
+            UnexpectOutputSize::check(1, job.peek_result().size());
+            matlab::data::TypedArray<Float> result = job.peek_result()[0];
             UnexpectNumValue<Float>::check(std::sqrt(Float(i)), Float(result[0]));
         }
         for (auto e : worker_used)
@@ -60,30 +60,25 @@ void run_test()
         for (std::size_t i = 0; i < N; i++)
         {
             Job job = pool->wait(jobid[i]);
-            UnexpectOutputSize::check(1, job.result.size());
-            matlab::data::TypedArray<Float> result = job.result[0];
+            UnexpectOutputSize::check(1, job.peek_result().size());
+            matlab::data::TypedArray<Float> result = job.peek_result()[0];
             UnexpectNumValue<Float>::check(std::sqrt(Float(i)), Float(result[0]));
         }
     });
 
-    Test::run("increase pool size", Effort::Huge, [&]() {
+    Test::run("increase/decrease pool size", Effort::Huge, [&]() {
         std::array<JobID, 31> jobid;
+        // increase
         for (JobID &i : jobid)
             i = pool->submit(Job(u"pause", 0, {factory.createScalar<double>(0.01)}));
-
         pool->resize(pool->size() + 2, options);
-
         for (JobID i : jobid)
             pool->wait(i);
-    });
 
-    Test::run("decrease pool size", Effort::Small, [&]() {
-        std::array<JobID, 31> jobid;
+        // decrease
         for (JobID &i : jobid)
             i = pool->submit(Job(u"pause", 0, {factory.createScalar<double>(0.01)}));
-
         pool->resize(pool->size() - 2, options);
-
         for (JobID i : jobid)
             pool->wait(i);
     });
@@ -125,7 +120,7 @@ void run_test()
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         //UnexpectCondition::Assert(!job.outputBuf.str().empty(), "empty output");
 #else
-            //UnexpectCondition::Assert(job.outputBuf.str().empty(), "output should be empty");
+        //UnexpectCondition::Assert(job.outputBuf.str().empty(), "output should be empty");
 #endif
     });
 
@@ -135,6 +130,8 @@ void run_test()
     });
 
     Test::run("get job status", Effort::Large, [&]() {
+        UnexpectOutputSize::check(0, pool->get_job_status()[0]["JobID"].getNumberOfElements());
+
         using Float = float;
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
@@ -143,8 +140,8 @@ void run_test()
         for (std::size_t i = 0; i < N; i++)
         {
             Job job = pool->wait(jobid[i]);
-            UnexpectOutputSize::check(1, job.result.size());
-            matlab::data::TypedArray<Float> result = job.result[0];
+            UnexpectOutputSize::check(1, job.peek_result().size());
+            matlab::data::TypedArray<Float> result = job.peek_result()[0];
             UnexpectNumValue<Float>::check(std::sqrt(Float(i)), Float(result[0]));
 
             auto status = pool->get_job_status();
@@ -155,6 +152,8 @@ void run_test()
     });
 
     Test::run("cancel jobs", Effort::Large, [&]() {
+        UnexpectOutputSize::check(0, pool->get_job_status()[0]["JobID"].getNumberOfElements());
+
         using Float = double;
         constexpr const std::size_t N = 31;
         Float pause = 0.05;
@@ -168,29 +167,43 @@ void run_test()
             pool->cancel(jobid[N - i - 1]);
 
         auto status = pool->get_job_status();
-        UnexpectOutputSize::check(0, status[0]["JobID"].getNumberOfElements());
+        matlab::data::TypedArray<JobID> jobid_field = status[0]["JobID"];
+        using StatusType = std::underlying_type<Job::Status>::type;
+        matlab::data::TypedArray<StatusType> status_field = status[0]["Status"];
+
+        if (jobid_field.getNumberOfElements() == 0)
+            return;
+        else if (jobid_field.getNumberOfElements() == 1)
+        {
+            if (static_cast<Job::Status>(StatusType(status_field[0])) != Job::Status::AssignToWorker)
+                UnexpectCondition("unexpect jobs status");
+        }
+        else
+            UnexpectCondition("unexpect jobs in pool");
     });
-    
+
     Test::run("get worker status", Effort::Large, [&]() {
+        UnexpectOutputSize::check(0, pool->get_job_status()[0]["JobID"].getNumberOfElements());
+
         using Float = double;
         std::size_t size = pool->size();
         JobID id = pool->submit(Job(u"pause", 0, {factory.createScalar<Float>(Float(1))}));
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         matlab::data::TypedArray<bool> ready1 = pool->get_worker_status()[0]["Ready"];
-        UnexpectCondition::Assert(!(ready1[0]),"first worker should be busy");
+        UnexpectCondition::Assert(!(ready1[0]), "first worker should be busy");
         for (std::size_t i = 1; i < size; i++)
-            UnexpectCondition::Assert(ready1[i],"other worker should sleep");
+            UnexpectCondition::Assert(ready1[i], "other worker should sleep");
         pool->wait(id);
 
         std::vector<JobID> ids(size);
-        for(auto &i : ids)
+        for (auto &i : ids)
             i = pool->submit(Job(u"pause", 0, {factory.createScalar<Float>(Float(1))}));
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         matlab::data::TypedArray<bool> ready2 = pool->get_worker_status()[0]["Ready"];
-        for (std::size_t i = 0; i <ready2.getNumberOfElements(); i++)
-            UnexpectCondition::Assert(!(ready2[i]),"all workers should be busy");
-        for(auto i : ids)
+        for (std::size_t i = 0; i < ready2.getNumberOfElements(); i++)
+            UnexpectCondition::Assert(!(ready2[i]), "all workers should be busy");
+        for (auto i : ids)
             pool->wait(i);
     });
 }

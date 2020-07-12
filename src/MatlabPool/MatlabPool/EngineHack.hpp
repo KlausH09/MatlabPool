@@ -4,7 +4,7 @@
 #include "MatlabDataArray.hpp"
 #include "MatlabEngine.hpp"
 
-#include "./Job.hpp"
+#include "./JobFuture.hpp"
 
 namespace MatlabPool
 {
@@ -24,18 +24,18 @@ namespace MatlabPool
     public:
         EngineHack(const std::vector<std::u16string> &options) : matlab::engine::MATLABEngine(start_matlabasync(options).get()) {}
 
-        void eval_job(Job_future &job, Notifier &&notifier)
+        void eval_job(JobFuture &job, Notifier &&notifier)
         {
             using namespace matlab::execution;
 
             // ================== fevalAsync, angepasste Implementierung =========================
-            size_t nrhs = job.args.size();
+            size_t nrhs = job.get_args().size();
             std::unique_ptr<matlab::data::impl::ArrayImpl *, void (*)(matlab::data::impl::ArrayImpl **)> argsImplPtr(new matlab::data::impl::ArrayImpl *[nrhs], [](matlab::data::impl::ArrayImpl **ptr) {
                 delete[] ptr;
             });
             matlab::data::impl::ArrayImpl **argsImpl = argsImplPtr.get();
             size_t i = 0;
-            for (auto &e : job.args)
+            for (auto &e : job.get_args())
                 argsImpl[i++] = matlab::data::detail::Access::getImpl<matlab::data::impl::ArrayImpl>(std::move(e));
 
             std::promise<std::vector<matlab::data::Array>> *p = new std::promise<std::vector<matlab::data::Array>>();
@@ -43,13 +43,13 @@ namespace MatlabPool
             std::future<std::vector<matlab::data::Array>> f = p->get_future();
 
             // the maltab implementation will call 'delete output' and 'delete error', so we have to copy it
-            void *output = job.outputBuf.get() ? new std::shared_ptr<StreamBuffer>(job.outputBuf.get()) : nullptr;
-            void *error = job.errorBuf.get() ? new std::shared_ptr<StreamBuffer>(job.errorBuf.get()) : nullptr;
+            void *output = job.get_outBuf().get() ? new std::shared_ptr<StreamBuffer>(job.get_outBuf().get()) : nullptr;
+            void *error = job.get_errBuf().get() ? new std::shared_ptr<StreamBuffer>(job.get_errBuf().get()) : nullptr;
 
-            std::string funstr = convertUTF16StringToASCIIString(job.function);
+            std::string funstr = convertUTF16StringToASCIIString(job.get_cmd());
 
             uintptr_t handle = cpp_engine_feval_with_completion(matlabHandle, funstr.c_str(),
-                                                                job.nlhs, false, argsImpl, nrhs,
+                                                                job.get_nlhs(), false, argsImpl, nrhs,
                                                                 set_feval_promise_data_hack,
                                                                 set_feval_promise_exception_hack,
                                                                 p_hack, output, error,
