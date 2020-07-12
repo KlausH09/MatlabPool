@@ -2,6 +2,7 @@
 #define MATLABPOOL_POOL_HPP
 
 #include "./Job.hpp"
+#include "./JobEval.hpp"
 
 namespace MatlabPool
 {
@@ -46,7 +47,7 @@ namespace MatlabPool
         virtual std::size_t size() const = 0;
         virtual JobID submit(Job &&job) = 0;
         virtual Job wait(JobID job_id) = 0;
-        virtual bool eval(const std::u16string& cmd) = 0;
+        virtual void eval(JobEval &job) = 0;
         virtual matlab::data::StructArray get_job_status() = 0;
         virtual matlab::data::StructArray get_worker_status() = 0;
         virtual void cancel(JobID jobID) = 0;

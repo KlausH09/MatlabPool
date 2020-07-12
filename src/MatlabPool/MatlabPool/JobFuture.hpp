@@ -31,7 +31,7 @@ namespace MatlabPool
             using std::swap;
             swap(*this, other);
         }
-        Job &operator=(JobFuture &&other) noexcept
+        JobFuture &operator=(JobFuture &&other) noexcept
         {
             using std::swap;
             swap(*this, other);

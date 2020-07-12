@@ -164,7 +164,7 @@ namespace MatlabPool
             return job_id;
         }
 
-        Job wait(JobID id) override // TODO: check error result
+        Job wait(JobID id) override
         {
 #ifdef MATLABPOOL_AVOID_ENDLESS_WAIT
             if (!exists(id))
@@ -186,48 +186,28 @@ namespace MatlabPool
             return job;
         }
 
-        bool eval(const std::u16string &cmd) override // TODO: check error result
+        void eval(JobEval &job) override
         {
-            bool error = false;
-            std::lock_guard<std::mutex> lock_worker(mutex_worker);
-
             std::vector<OutputBuf> outBuf_vec(engine.size());
             std::vector<ErrorBuf> errBuf_vec(engine.size());
-
-            OutputBuf outBuf;
-            ErrorBuf errBuf;
 
             std::vector<matlab::engine::FutureResult<void>> future(engine.size());
 
             for (std::size_t i = 0; i < engine.size(); i++)
-            {
-                future[i] = engine[i]->evalAsync(cmd, outBuf_vec[i].get(), errBuf_vec[i].get());
-            }
+                future[i] = engine[i]->evalAsync(job.get_cmd(), outBuf_vec[i].get(), errBuf_vec[i].get());
 
             for (std::size_t i = 0; i < engine.size(); i++)
             {
+                job.add_output(outBuf_vec[i], i);
                 try
                 {
                     future[i].get();
                 }
                 catch (const matlab::engine::Exception &e)
                 {
-                    error = true;
-                    errBuf << u"============= Error Worker " << i + 1 << u" ===============\n";
-                    errBuf << std::move(errBuf_vec[i].str());
-                    errBuf << std::u16string(45, '=') << u"\n";
-                }
-
-                if (!outBuf_vec[i].empty())
-                {
-                    outBuf << u"============= Output Worker " << i + 1 << u" ==============\n";
-                    outBuf << std::move(outBuf_vec[i].str());
-                    outBuf << std::u16string(45, '=') << u"\n";
+                    job.add_error(errBuf_vec[i], i);
                 }
             }
-
-            // TODO outbuf, errbuf
-            return error;
         }
 
         matlab::data::StructArray get_job_status() override

@@ -113,8 +113,8 @@ void run_test()
     });
 
     Test::run("eval", Effort::Normal, [&]() {
-        std::u16string cmd{u"pwd"};
-        pool->eval(cmd);
+        JobEval job(u"pwd");
+        pool->eval(job);
 
         // TODO
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT

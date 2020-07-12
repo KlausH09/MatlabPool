@@ -2,6 +2,7 @@
 #define MATLABPOOL_HPP
 
 #include "MatlabPool/Job.hpp"
+#include "MatlabPool/JobEval.hpp"
 #include "MatlabPool/Pool.hpp"
 #include "MatlabPool/LibLoader.hpp"
 

@@ -106,10 +106,19 @@ private:
         return ((matlab::data::CharArray)data).toUTF16();
     }
 
-    void throwError(std::string msg)
+    template<typename T>
+    void disp(const T &msg)
+    {
+        matlabPtr->feval(u"disp", 0,
+                         std::vector<matlab::data::Array>({factory.createScalar(msg)}));
+
+    }
+
+    template<typename T>
+    void throwError(const T &msg)
     {
         matlabPtr->feval(u"error", 0,
-                         std::vector<matlab::data::Array>({factory.createScalar(std::move(msg))}));
+                         std::vector<matlab::data::Array>({factory.createScalar(msg)}));
     }
 
 private:
