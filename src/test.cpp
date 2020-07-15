@@ -15,11 +15,12 @@
 void run_test()
 {
     using namespace MatlabPool;
-    using namespace TestSuite;
-    using Effort = Test::Effort;
 
-    Test::maxEffort = Effort::Large;
-    //Test::maxEffort = Effort::Huge;
+    using Effort = TestSuite::Effort;
+
+    TestSuite Test;
+    Test.set_maxEffort(Effort::Large);
+    //Test.set_maxEffort(Effort::Huge);
 
     const unsigned int nof_worker = 2;
     std::vector<std::u16string> options = {u"-nojvm", u"-nosplash"};
@@ -27,13 +28,20 @@ void run_test()
     auto pool_guard = std::unique_ptr<Pool>(LibLoader::createPool(nof_worker, options));
     Pool *pool = pool_guard.get();
 
-    auto jobs_in_pool = [&]() { return pool->get_job_status()[0]["JobID"].getNumberOfElements(); };
+    Test.set_postFun([&](){
+        std::size_t count_jobs = pool->get_job_status()[0]["JobID"].getNumberOfElements();
+        if(count_jobs == 1)
+        {
+            // TODO
+            return;
+        }
+        UnexpectCondition::Assert(0 == count_jobs, "there are jobs in the pool");
+    });
 
     // Create  MATLAB data array factory
     matlab::data::ArrayFactory factory;
 
-    Test::run("sqrt(i) mit i = 0,1,...,30, double", Effort::Normal, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("sqrt(i) mit i = 0,1,...,30, double", Effort::Normal, [&]() {
 
         using Float = double;
         constexpr const std::size_t N = 31;
@@ -56,8 +64,7 @@ void run_test()
             UnexpectCondition::Assert(e, "unused worker");
     });
 
-    Test::run("sqrt(i) mit i = 0,1,...,30, float", Effort::Normal, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("sqrt(i) mit i = 0,1,...,30, float", Effort::Normal, [&]() {
 
         using Float = float;
         constexpr const std::size_t N = 31;
@@ -74,8 +81,7 @@ void run_test()
         }
     });
 
-    Test::run("increase/decrease pool size", Effort::Huge, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("increase/decrease pool size", Effort::Huge, [&]() {
 
         std::array<JobID, 31> jobid;
         // increase
@@ -93,8 +99,7 @@ void run_test()
             pool->wait(i);
     });
 
-    Test::run("restart pool", Effort::Huge, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("restart pool", Effort::Huge, [&]() {
 
         std::array<JobID, 31> jobid;
         for (JobID &i : jobid)
@@ -104,24 +109,21 @@ void run_test()
         pool = pool_guard.get();
     });
 
-    Test::run("empty pool size", Effort::Small, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("empty pool size", Effort::Small, [&]() {
 
         UnexpectException<Pool::EmptyPool>::check([&]() {
             pool->resize(0, options);
         });
     });
 
-    Test::run("wait for undefined job", Effort::Small, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("wait for undefined job", Effort::Small, [&]() {
 
         UnexpectException<Pool::JobNotExists>::check([&]() {
             pool->wait(9999);
         });
     });
 
-    Test::run("wait x2 for same job", Effort::Small, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("wait x2 for same job", Effort::Small, [&]() {
 
         JobID id = pool->submit(Job(u"sqrt", 1, {factory.createScalar<double>(0.5)}));
         pool->wait(id);
@@ -130,8 +132,7 @@ void run_test()
         });
     });
 
-    Test::run("eval", Effort::Normal, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("eval", Effort::Normal, [&]() {
 
         JobEval job(u"pwd");
         pool->eval(job);
@@ -145,8 +146,7 @@ void run_test()
 #endif
     });
 
-    Test::run("jobs and eval", Effort::Normal, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("jobs and eval", Effort::Normal, [&]() {
 
         using Float = double;
         constexpr const std::size_t N = 31;
@@ -161,8 +161,7 @@ void run_test()
             pool->wait(jobid[i]);
     });
 
-    Test::run("invalid eval", Effort::Normal, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("invalid eval", Effort::Normal, [&]() {
 
         JobEval job(u"pwwd");
         pool->eval(job);
@@ -176,8 +175,7 @@ void run_test()
 #endif
     });
 
-    Test::run("invalid job", Effort::Normal, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("invalid job", Effort::Normal, [&]() {
 
         JobID id = pool->submit(Job(u"sqqqqrt", 1, {factory.createArray<double>({0})}));
         auto job = pool->wait(id);
@@ -192,8 +190,7 @@ void run_test()
 #endif
     });
 
-    Test::run("job with disp", Effort::Normal, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("job with disp", Effort::Normal, [&]() {
 
         JobID id = pool->submit(Job(u"disp", 1, {factory.createCharArray("Hello World!")}));
         Job job = pool->wait(id);
@@ -206,8 +203,7 @@ void run_test()
         UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
     });
 
-    Test::run("get job status", Effort::Large, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("get job status", Effort::Large, [&]() {
 
         using Float = float;
         constexpr const std::size_t N = 31;
@@ -228,8 +224,7 @@ void run_test()
         }
     });
 
-    Test::run("cancel jobs", Effort::Large, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("cancel jobs", Effort::Large, [&]() {
 
         using Float = double;
         constexpr const std::size_t N = 31;
@@ -259,8 +254,7 @@ void run_test()
             UnexpectCondition("unexpect jobs in pool");
     });
 
-    Test::run("get worker status", Effort::Large, [&]() {
-        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+    Test.run("get worker status", Effort::Large, [&]() {
 
         using Float = double;
         JobID id = pool->submit(Job(u"pause", 0, {factory.createScalar<Float>(Float(1))}));
