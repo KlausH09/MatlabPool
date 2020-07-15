@@ -184,7 +184,7 @@ void run_test()
     });
 
     Test.run("job with disp", Effort::Normal, [&]() {
-        JobID id = pool->submit(Job(u"disp", 1, {factory.createCharArray("Hello World!")}));
+        JobID id = pool->submit(Job(u"disp", 0, {factory.createCharArray("Hello World!")}));
         Job job = pool->wait(id);
 
         UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
