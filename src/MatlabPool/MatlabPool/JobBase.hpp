@@ -77,11 +77,12 @@ namespace MatlabPool
         }
         friend void swap(JobBase &j1, JobBase &j2) noexcept
         {
-            std::swap(j1.id, j2.id);
-            std::swap(j1.cmd, j2.cmd);
+            using std::swap;
+            swap(j1.id, j2.id);
+            swap(j1.cmd, j2.cmd);
 
-            std::swap(j1.outputBuf, j2.outputBuf);
-            std::swap(j1.errorBuf, j2.errorBuf);
+            swap(j1.outputBuf, j2.outputBuf);
+            swap(j1.errorBuf, j2.errorBuf);
         }
 
         JobID get_ID() const noexcept
