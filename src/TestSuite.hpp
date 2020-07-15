@@ -6,6 +6,7 @@
 #include <exception>
 #include <string>
 #include <functional>
+#include <chrono>
 
 class TestSuite
 {
@@ -26,6 +27,7 @@ public:
 
 public:
     TestSuite() : count(0), failed(0),
+                  count_repeats(0),
                   maxEffort(Effort::Normal),
                   prefun([]() {}), postfun([]() {})
     {
@@ -39,6 +41,11 @@ public:
     void set_postFun(std::function<void()> fun)
     {
         postfun = std::move(fun);
+    }
+
+    void set_repeats(std::size_t repeats)
+    {
+        count_repeats = repeats;
     }
 
     void set_maxEffort(Effort val)
@@ -56,10 +63,14 @@ public:
         try
         {
             ++failed;
-            prefun();
-            operation();
-            postfun();
-            std::cout << "ok" << std::endl;
+            tic();
+            for (std::size_t i = 0; i < count_repeats + 1; i++)
+            {
+                prefun();
+                operation();
+                postfun();
+            }
+            std::cout << "ok, " << std::setprecision(4) << toc() << " sec" << std::endl;
             --failed;
         }
         catch (std::exception &e)
@@ -73,12 +84,29 @@ public:
     }
 
 private:
+    inline void tic()
+    {
+        t0 = std::chrono::high_resolution_clock::now();
+    }
+    inline float toc()
+    {
+        using namespace std::chrono;
+        elapsed = high_resolution_clock::now() - t0;
+        return duration<float, seconds::period>(elapsed).count();
+    }
+
+private:
     std::size_t count;
     std::size_t failed;
+
+    std::size_t count_repeats;
     Effort maxEffort;
 
     std::function<void()> prefun;
     std::function<void()> postfun;
+
+    std::chrono::high_resolution_clock::time_point t0;
+    std::chrono::high_resolution_clock::duration elapsed;
 };
 
 class UnexpectCondition : public TestSuite::TestSuiteException

@@ -19,7 +19,8 @@ void run_test()
     using Effort = TestSuite::Effort;
 
     TestSuite Test;
-    Test.set_maxEffort(Effort::Large);
+    Test.set_repeats(30);
+    Test.set_maxEffort(Effort::Normal);
     //Test.set_maxEffort(Effort::Huge);
 
     const unsigned int nof_worker = 2;
@@ -28,9 +29,9 @@ void run_test()
     auto pool_guard = std::unique_ptr<Pool>(LibLoader::createPool(nof_worker, options));
     Pool *pool = pool_guard.get();
 
-    Test.set_postFun([&](){
+    Test.set_postFun([&]() {
         std::size_t count_jobs = pool->get_job_status()[0]["JobID"].getNumberOfElements();
-        if(count_jobs == 1)
+        if (count_jobs == 1)
         {
             // TODO
             return;
@@ -42,7 +43,6 @@ void run_test()
     matlab::data::ArrayFactory factory;
 
     Test.run("sqrt(i) mit i = 0,1,...,30, double", Effort::Normal, [&]() {
-
         using Float = double;
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
@@ -65,7 +65,6 @@ void run_test()
     });
 
     Test.run("sqrt(i) mit i = 0,1,...,30, float", Effort::Normal, [&]() {
-
         using Float = float;
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
@@ -82,7 +81,6 @@ void run_test()
     });
 
     Test.run("increase/decrease pool size", Effort::Huge, [&]() {
-
         std::array<JobID, 31> jobid;
         // increase
         for (JobID &i : jobid)
@@ -100,7 +98,6 @@ void run_test()
     });
 
     Test.run("restart pool", Effort::Huge, [&]() {
-
         std::array<JobID, 31> jobid;
         for (JobID &i : jobid)
             i = pool->submit(Job(u"pause", 0, {factory.createScalar<double>(0.01)}));
@@ -110,21 +107,18 @@ void run_test()
     });
 
     Test.run("empty pool size", Effort::Small, [&]() {
-
         UnexpectException<Pool::EmptyPool>::check([&]() {
             pool->resize(0, options);
         });
     });
 
     Test.run("wait for undefined job", Effort::Small, [&]() {
-
         UnexpectException<Pool::JobNotExists>::check([&]() {
             pool->wait(9999);
         });
     });
 
     Test.run("wait x2 for same job", Effort::Small, [&]() {
-
         JobID id = pool->submit(Job(u"sqrt", 1, {factory.createScalar<double>(0.5)}));
         pool->wait(id);
         UnexpectException<Pool::JobNotExists>::check([&]() {
@@ -133,21 +127,22 @@ void run_test()
     });
 
     Test.run("eval", Effort::Normal, [&]() {
+        for (size_t i = 0; i < 100; i++)
+        {
+            JobEval job(u"pwd;pause(0.1)");
+            pool->eval(job);
 
-        JobEval job(u"pwd");
-        pool->eval(job);
-
-        UnexpectCondition::Assert(job.get_status() == JobEval::Status::NoError, "error in at least one worker");
-        UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
+            UnexpectCondition::Assert(job.get_status() == JobEval::Status::NoError, "error in at least one worker");
+            UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-        UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
+            UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
 #else
             UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
 #endif
+        }
     });
 
     Test.run("jobs and eval", Effort::Normal, [&]() {
-
         using Float = double;
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
@@ -162,7 +157,6 @@ void run_test()
     });
 
     Test.run("invalid eval", Effort::Normal, [&]() {
-
         JobEval job(u"pwwd");
         pool->eval(job);
 
@@ -176,7 +170,6 @@ void run_test()
     });
 
     Test.run("invalid job", Effort::Normal, [&]() {
-
         JobID id = pool->submit(Job(u"sqqqqrt", 1, {factory.createArray<double>({0})}));
         auto job = pool->wait(id);
 
@@ -186,25 +179,23 @@ void run_test()
 #ifdef MATLABPOOL_DISP_WORKER_ERROR
         UnexpectCondition::Assert(!job.get_errBuf().empty(), "empty error buffer");
 #else
-        UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty"); 
+            UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
 #endif
     });
 
     Test.run("job with disp", Effort::Normal, [&]() {
-
         JobID id = pool->submit(Job(u"disp", 1, {factory.createCharArray("Hello World!")}));
         Job job = pool->wait(id);
 
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-        UnexpectCondition::Assert(!job.get_outBuf().empty(), "output buffer should not be empty");
-#else
-        UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
-#endif
         UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
+#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
+        UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
+#else
+            UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
+#endif
     });
 
     Test.run("get job status", Effort::Large, [&]() {
-
         using Float = float;
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
@@ -224,8 +215,7 @@ void run_test()
         }
     });
 
-    Test.run("cancel jobs", Effort::Large, [&]() {
-
+    Test.run("cancel jobs", Effort::Normal, [&]() {
         using Float = double;
         constexpr const std::size_t N = 31;
         Float pause = 0.05;
@@ -255,7 +245,6 @@ void run_test()
     });
 
     Test.run("get worker status", Effort::Large, [&]() {
-
         using Float = double;
         JobID id = pool->submit(Job(u"pause", 0, {factory.createScalar<Float>(Float(1))}));
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
