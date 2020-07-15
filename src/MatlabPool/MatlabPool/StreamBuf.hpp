@@ -9,104 +9,78 @@
 
 namespace MatlabPool
 {
-    class StreamBuf
+
+    class EmptyStreamBuffer
     {
     protected:
-        using SBuf = std::basic_streambuf<char16_t>;
-
+        using SBuf = std::basic_stringbuf<char16_t>;
     public:
-        std::shared_ptr<SBuf> get();
-        std::u16string str() const;
-        std::size_t size();
-        bool empty();
-    };
-
-    class EmptyStreamBuffer : public StreamBuf
-    {
-    public:
-        std::shared_ptr<SBuf> get()
+        std::shared_ptr<SBuf> get() noexcept
         {
             return std::shared_ptr<SBuf>(nullptr);
         }
 
-        std::u16string str() const
+        std::u16string str() const noexcept
         {
             return u"";
         }
-
-        template <typename T>
-        EmptyStreamBuffer &operator<<(const T &val)
-        {
-            return *this;
-        }
-
-        std::size_t size()
-        {
-            return 0;
-        }
-
-        bool empty()
+        
+        bool empty() const noexcept
         {
             return true;
         }
 
-        friend void swap(EmptyStreamBuffer &rhs, EmptyStreamBuffer &lhs) {}
+        template <typename T>
+        EmptyStreamBuffer &operator<<(const T &val) noexcept
+        {
+            return *this;
+        }
+
+        friend void swap(EmptyStreamBuffer &rhs, EmptyStreamBuffer &lhs) noexcept {}
 
     private:
     };
 
-    class RealStreamBuffer : public StreamBuf
+    class RealStreamBuffer : public EmptyStreamBuffer
     {
     public:
-        RealStreamBuffer() : stream(), buffer(stream.rdbuf(), [](SBuf *) {}) {}
+        RealStreamBuffer() : buffer(std::make_shared<SBuf>()) {}
 
-        std::shared_ptr<SBuf> get()
+        std::shared_ptr<SBuf> get() noexcept
         {
             return buffer;
         }
 
         std::u16string str() const
         {
-            return stream.str();
+            return buffer->str();
+        }
+
+        bool empty() const
+        {
+            return str().empty(); // TODO !
         }
 
         RealStreamBuffer &operator<<(std::size_t val)
         {
             static std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
-            stream << conv.from_bytes(std::to_string(val));
+            *this << conv.from_bytes(std::to_string(val));
             return *this;
         }
 
-        RealStreamBuffer &operator<<(const std::u16string &val)
+        RealStreamBuffer &operator<<(const std::u16string& val)
         {
-            stream << val;
+            buffer->sputn(&val[0],val.size());
             return *this;
-        }
-
-        RealStreamBuffer &operator<<(const char16_t *val)
-        {
-            stream << val;
-            return *this;
-        }
-
-        std::size_t size()
-        {
-            auto tmp = stream.tellp();
-            return tmp < 0 ? 0 : std::size_t(tmp);
-        }
-
-        bool empty()
-        {
-            return size() == 0;
         }
 
         friend void swap(RealStreamBuffer &lhs, RealStreamBuffer &rhs)
         {
-            std::swap(rhs.stream, lhs.stream);
+            using std::swap;
+            swap(rhs.buffer, lhs.buffer);
         }
 
     private:
-        std::basic_ostringstream<char16_t> stream;
         std::shared_ptr<SBuf> buffer;
     };
 
