@@ -63,13 +63,13 @@ build: $(DLL) $(Test) $(MEX)
 
 # engine test
 $(Test): ./src/$(basename $(Test)).cpp
-	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
+	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
 $(DLL): ./src/$(basename $(DLL)).cpp
-	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
+	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
 $(MEX): ./src/$(basename $(MEX)).cpp
-	$(CXX) -o $@ $(DEFINES) $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $(CXXOPTIMFLAGS) $< $(LINKLIBS)
+	$(CXX) -o $@ $(DEFINES) $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
 test: build
 	./$(Test)

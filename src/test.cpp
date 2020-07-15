@@ -27,10 +27,14 @@ void run_test()
     auto pool_guard = std::unique_ptr<Pool>(LibLoader::createPool(nof_worker, options));
     Pool *pool = pool_guard.get();
 
+    auto jobs_in_pool = [&]() { return pool->get_job_status()[0]["JobID"].getNumberOfElements(); };
+
     // Create  MATLAB data array factory
     matlab::data::ArrayFactory factory;
 
     Test::run("sqrt(i) mit i = 0,1,...,30, double", Effort::Normal, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         using Float = double;
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
@@ -42,9 +46,9 @@ void run_test()
         {
             Job job = pool->wait(jobid[i]);
             worker_used[job.get_workerID()] = true;
-            UnexpectOutputSize::check(1, job.peek_result().size());
+            UnexpectCondition::Assert(1 == job.peek_result().size(), "unexpect size of result");
             matlab::data::TypedArray<Float> result = job.peek_result()[0];
-            UnexpectNumValue<Float>::check(std::sqrt(Float(i)), Float(result[0]));
+            UnexpectCondition::Assert(std::sqrt(Float(i)) == Float(result[0]), "unexpect result");
             UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
             UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
         }
@@ -53,6 +57,8 @@ void run_test()
     });
 
     Test::run("sqrt(i) mit i = 0,1,...,30, float", Effort::Normal, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         using Float = float;
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
@@ -62,13 +68,15 @@ void run_test()
         for (std::size_t i = 0; i < N; i++)
         {
             Job job = pool->wait(jobid[i]);
-            UnexpectOutputSize::check(1, job.peek_result().size());
+            UnexpectCondition::Assert(1 == job.peek_result().size(), "unexpect size of result");
             matlab::data::TypedArray<Float> result = job.peek_result()[0];
-            UnexpectNumValue<Float>::check(std::sqrt(Float(i)), Float(result[0]));
+            UnexpectCondition::Assert(std::sqrt(Float(i)) == Float(result[0]), "unexpect result");
         }
     });
 
     Test::run("increase/decrease pool size", Effort::Huge, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         std::array<JobID, 31> jobid;
         // increase
         for (JobID &i : jobid)
@@ -86,6 +94,8 @@ void run_test()
     });
 
     Test::run("restart pool", Effort::Huge, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         std::array<JobID, 31> jobid;
         for (JobID &i : jobid)
             i = pool->submit(Job(u"pause", 0, {factory.createScalar<double>(0.01)}));
@@ -95,18 +105,24 @@ void run_test()
     });
 
     Test::run("empty pool size", Effort::Small, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         UnexpectException<Pool::EmptyPool>::check([&]() {
             pool->resize(0, options);
         });
     });
 
     Test::run("wait for undefined job", Effort::Small, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         UnexpectException<Pool::JobNotExists>::check([&]() {
             pool->wait(9999);
         });
     });
 
     Test::run("wait x2 for same job", Effort::Small, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         JobID id = pool->submit(Job(u"sqrt", 1, {factory.createScalar<double>(0.5)}));
         pool->wait(id);
         UnexpectException<Pool::JobNotExists>::check([&]() {
@@ -115,6 +131,8 @@ void run_test()
     });
 
     Test::run("eval", Effort::Normal, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         JobEval job(u"pwd");
         pool->eval(job);
 
@@ -123,11 +141,13 @@ void run_test()
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
 #else
-        UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
+            UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
 #endif
     });
 
     Test::run("jobs and eval", Effort::Normal, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         using Float = double;
         constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
@@ -142,6 +162,8 @@ void run_test()
     });
 
     Test::run("invalid eval", Effort::Normal, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         JobEval job(u"pwwd");
         pool->eval(job);
 
@@ -155,16 +177,27 @@ void run_test()
     });
 
     Test::run("invalid job", Effort::Normal, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         JobID id = pool->submit(Job(u"sqqqqrt", 1, {factory.createArray<double>({0})}));
+        auto job = pool->wait(id);
 
         UnexpectException<JobBase::ExecutionError>::check([&]() {
-            pool->wait(id);
+            job.pop_result();
         });
+#ifdef MATLABPOOL_DISP_WORKER_ERROR
+        UnexpectCondition::Assert(!job.get_errBuf().empty(), "empty error buffer");
+#else
+        UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty"); 
+#endif
     });
 
     Test::run("job with disp", Effort::Normal, [&]() {
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
+
         JobID id = pool->submit(Job(u"disp", 1, {factory.createCharArray("Hello World!")}));
         Job job = pool->wait(id);
+
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         UnexpectCondition::Assert(!job.get_outBuf().empty(), "output buffer should not be empty");
 #else
@@ -174,7 +207,7 @@ void run_test()
     });
 
     Test::run("get job status", Effort::Large, [&]() {
-        UnexpectOutputSize::check(0, pool->get_job_status()[0]["JobID"].getNumberOfElements());
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
 
         using Float = float;
         constexpr const std::size_t N = 31;
@@ -184,19 +217,19 @@ void run_test()
         for (std::size_t i = 0; i < N; i++)
         {
             Job job = pool->wait(jobid[i]);
-            UnexpectOutputSize::check(1, job.peek_result().size());
+            UnexpectCondition::Assert(1 == job.peek_result().size(), "unexpect size of result");
             matlab::data::TypedArray<Float> result = job.peek_result()[0];
-            UnexpectNumValue<Float>::check(std::sqrt(Float(i)), Float(result[0]));
+            UnexpectCondition::Assert(std::sqrt(Float(i)) == Float(result[0]), "unexpect result");
 
             auto status = pool->get_job_status();
-            UnexpectOutputSize::check(N - i - 1, status[0]["JobID"].getNumberOfElements());
-            UnexpectOutputSize::check(N - i - 1, status[0]["Status"].getNumberOfElements());
-            UnexpectOutputSize::check(N - i - 1, status[0]["WorkerID"].getNumberOfElements());
+            UnexpectCondition::Assert(N - i - 1 == status[0]["JobID"].getNumberOfElements(), "unexpect size for \"JobID\" field");
+            UnexpectCondition::Assert(N - i - 1 == status[0]["Status"].getNumberOfElements(), "unexpect size for \"Status\" field");
+            UnexpectCondition::Assert(N - i - 1 == status[0]["WorkerID"].getNumberOfElements(), "unexpect size for \"WorkerID\" field");
         }
     });
 
     Test::run("cancel jobs", Effort::Large, [&]() {
-        UnexpectOutputSize::check(0, pool->get_job_status()[0]["JobID"].getNumberOfElements());
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
 
         using Float = double;
         constexpr const std::size_t N = 31;
@@ -227,28 +260,20 @@ void run_test()
     });
 
     Test::run("get worker status", Effort::Large, [&]() {
-        UnexpectOutputSize::check(0, pool->get_job_status()[0]["JobID"].getNumberOfElements());
+        UnexpectCondition::Assert(0 == jobs_in_pool(), "there are jobs in the pool");
 
         using Float = double;
-        std::size_t size = pool->size();
         JobID id = pool->submit(Job(u"pause", 0, {factory.createScalar<Float>(Float(1))}));
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         matlab::data::TypedArray<bool> ready1 = pool->get_worker_status()[0]["Ready"];
-        UnexpectCondition::Assert(!(ready1[0]), "first worker should be busy");
-        for (std::size_t i = 1; i < size; i++)
-            UnexpectCondition::Assert(ready1[i], "other worker should sleep");
-        pool->wait(id);
+        std::size_t count_busy = 0;
+        for (bool b : ready1)
+            if (!b)
+                ++count_busy;
 
-        std::vector<JobID> ids(size);
-        for (auto &i : ids)
-            i = pool->submit(Job(u"pause", 0, {factory.createScalar<Float>(Float(1))}));
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        matlab::data::TypedArray<bool> ready2 = pool->get_worker_status()[0]["Ready"];
-        for (std::size_t i = 0; i < ready2.getNumberOfElements(); i++)
-            UnexpectCondition::Assert(!(ready2[i]), "all workers should be busy");
-        for (auto i : ids)
-            pool->wait(i);
+        UnexpectCondition::Assert(count_busy == 1, "only on worker should be busy");
+        pool->wait(id);
     });
 }
 
