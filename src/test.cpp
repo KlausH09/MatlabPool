@@ -17,9 +17,11 @@ void run_tests()
     using Effort = TestSuite::Effort;
     using namespace MatlabPool;
 
+    constexpr const std::size_t N = 50; // count of jobs in a single test
+
     TestSuite test;
     test.set_countEval(Effort::Small, 100);
-    test.set_countEval(Effort::Normal, 50);
+    test.set_countEval(Effort::Normal, 30);
     test.set_countEval(Effort::Large, 5);
     test.set_countEval(Effort::Huge, 1);
 
@@ -42,9 +44,8 @@ void run_tests()
     // Create  MATLAB data array factory
     matlab::data::ArrayFactory factory;
 
-    test.run("sqrt(i) mit i = 0,1,...,30, double", Effort::Normal, [&]() {
+    test.run("sqrt(i) with i = 0,1,...,N, double", Effort::Normal, [&]() {
         using Float = double;
-        constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
         std::vector<bool> worker_used(pool->size(), false);
         for (std::size_t i = 0; i < N; i++)
@@ -64,9 +65,8 @@ void run_tests()
             UnexpectCondition::Assert(e, "unused worker");
     });
 
-    test.run("sqrt(i) mit i = 0,1,...,30, float", Effort::Normal, [&]() {
+    test.run("sqrt(i) with i = 0,1,...,N, float", Effort::Normal, [&]() {
         using Float = float;
-        constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
         for (std::size_t i = 0; i < N; i++)
             jobid[i] = pool->submit(Job(u"sqrt", 1, {factory.createScalar<Float>(Float(i))}));
@@ -81,7 +81,7 @@ void run_tests()
     });
 
     test.run("increase/decrease pool size", Effort::Huge, [&]() {
-        std::array<JobID, 31> jobid;
+        std::array<JobID, N> jobid;
         // increase
         for (JobID &i : jobid)
             i = pool->submit(Job(u"pause", 0, {factory.createScalar<double>(0.01)}));
@@ -98,7 +98,7 @@ void run_tests()
     });
 
     test.run("restart pool", Effort::Huge, [&]() {
-        std::array<JobID, 31> jobid;
+        std::array<JobID, N> jobid;
         for (JobID &i : jobid)
             i = pool->submit(Job(u"pause", 0, {factory.createScalar<double>(0.01)}));
 
@@ -114,7 +114,7 @@ void run_tests()
 
     test.run("wait for undefined job", Effort::Small, [&]() {
         UnexpectException<Pool::JobNotExists>::check([&]() {
-            pool->wait(9999);
+            pool->wait(JobID(-1));
         });
     });
 
@@ -141,7 +141,6 @@ void run_tests()
 
     test.run("jobs and eval", Effort::Normal, [&]() {
         using Float = double;
-        constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
         for (std::size_t i = 0; i < N; i++)
             jobid[i] = pool->submit(Job(u"sqrt", 1, {factory.createScalar<Float>(Float(i))}));
@@ -194,7 +193,6 @@ void run_tests()
 
     test.run("get job status", Effort::Normal, [&]() {
         using Float = float;
-        constexpr const std::size_t N = 31;
         std::array<JobID, N> jobid;
         for (std::size_t i = 0; i < N; i++)
             jobid[i] = pool->submit(Job(u"sqrt", 1, {factory.createScalar<Float>(Float(i))}));
@@ -214,13 +212,10 @@ void run_tests()
 
     test.run("cancel jobs", Effort::Normal, [&]() {
         using Float = double;
-        constexpr const std::size_t N = 31;
         Float pause = 0.05;
         std::array<JobID, N> jobid;
         for (std::size_t i = 0; i < N; i++)
             jobid[i] = pool->submit(Job(u"pause", 0, {factory.createScalar<Float>(pause)}));
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(int(pause / 2 * N) * 1000));
 
         for (std::size_t i = 0; i < N; i++)
             pool->cancel(jobid[N - i - 1]);
@@ -239,7 +234,7 @@ void run_tests()
         }
         else
             UnexpectCondition("unexpect jobs in pool");
-    });
+    }); 
 
     test.run("get worker status", Effort::Large, [&]() {
         using Float = double;

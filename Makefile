@@ -38,7 +38,7 @@ endif
 DEFINES := -DMATLAB_DEFAULT_RELEASE=R2017b -DUSE_MEX_CMD
 MEXDEFINES := -DMATLAB_MEX_FILE
 INCLUDE := -I"$(MatlabRoot)/extern/include" -I./src -I./src/MatlabPool
-CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -m64  -Wall
+CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -m64 -Wall
 
 DEFINES += -DMATLABPOOL_DISP_WORKER_OUTPUT
 DEFINES += -DMATLABPOOL_DISP_WORKER_ERROR

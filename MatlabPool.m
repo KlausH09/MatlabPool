@@ -8,6 +8,7 @@ classdef MatlabPool < handle
         cmd_statusWorker = uint8(4)
         cmd_eval         = uint8(5)
         cmd_cancel       = uint8(6)
+        cmd_size         = uint8(7)
         
         options = {'-nojvm', '-nosplash'}
     end
@@ -18,8 +19,11 @@ classdef MatlabPool < handle
     
     methods
         function obj = MatlabPool(n)
-            obj.n = n;
-            MatlabPoolMEX(MatlabPool.cmd_resize,obj.n,MatlabPool.options{:})
+            resize(obj,n)
+        end
+        
+        function delete(~)
+            % clear MatlabPoolMEX
         end
         
         function jobid = submit(~,fun,nof_args,varargin)
@@ -44,6 +48,15 @@ classdef MatlabPool < handle
         
         function cancel(~,jobid)
             MatlabPoolMEX(MatlabPool.cmd_cancel,uint64(jobid));
+        end
+        
+        function val = size(~)
+            val = MatlabPoolMEX(MatlabPool.cmd_size);
+        end
+        
+        function resize(obj,val)
+            obj.n = val;
+            MatlabPoolMEX(MatlabPool.cmd_resize,obj.n,MatlabPool.options{:})
         end
         
     end

@@ -155,3 +155,11 @@ void MexFunction::cancel(matlab::mex::ArgumentList &outputs, matlab::mex::Argume
 
     pool->cancel(get_scalar<MatlabPool::JobID>(inputs[1]));
 }
+
+void MexFunction::size(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs)
+{
+    if (!pool)
+        outputs[0] = factory.createScalar<std::size_t>(0);
+    else
+        outputs[0] = factory.createScalar<std::size_t>(pool->size());
+}

@@ -73,6 +73,7 @@ public:
         std::string msg;
     };
 
+public:
     MexFunction()
     {
         //mexLock();
@@ -91,6 +92,7 @@ public:
     void statusWorker(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
     void eval(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
     void cancel(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
+    void size(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
 
 private:
     template <typename T>

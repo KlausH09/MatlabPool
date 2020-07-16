@@ -28,6 +28,7 @@ namespace MatlabPool::MexCommands
                 /*  4 */ {"statusWorker", &MexFunction::statusWorker},
                 /*  5 */ {"eval", &MexFunction::eval},
                 /*  6 */ {"cancel", &MexFunction::cancel},
+                /*  7 */ {"size", &MexFunction::size},
         };
 
         constexpr CmdID nof_commands = CmdID(sizeof(commands) / sizeof(Cmd));
