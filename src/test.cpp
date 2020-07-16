@@ -127,19 +127,16 @@ void run_test()
     });
 
     Test.run("eval", Effort::Normal, [&]() {
-        for (size_t i = 0; i < 100; i++)
-        {
-            JobEval job(u"pwd;pause(0.1)");
-            pool->eval(job);
+        JobEval job(u"pwd");
+        pool->eval(job);
 
-            UnexpectCondition::Assert(job.get_status() == JobEval::Status::NoError, "error in at least one worker");
-            UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
+        UnexpectCondition::Assert(job.get_status() == JobEval::Status::NoError, "error in at least one worker");
+        UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-            UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
+        UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
 #else
-            UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
+        UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
 #endif
-        }
     });
 
     Test.run("jobs and eval", Effort::Normal, [&]() {

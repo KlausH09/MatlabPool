@@ -188,17 +188,18 @@ namespace MatlabPool
 
         void eval(JobEval &job) override
         {
-            std::vector<OutputBuf> outBuf_vec(engine.size());
-            std::vector<ErrorBuf> errBuf_vec(engine.size());
+            std::size_t n = engine.size();
 
-            std::vector<matlab::engine::FutureResult<void>> future(engine.size());
+            std::vector<OutputBuf> outBuf_vec(n);
+            std::vector<ErrorBuf> errBuf_vec(n);
 
-            for (std::size_t i = 0; i < engine.size(); i++)
+            std::vector<matlab::engine::FutureResult<void>> future(n);
+
+            for (std::size_t i = 0; i < n; i++)
                 future[i] = engine[i]->evalAsync(job.get_cmd(), outBuf_vec[i].get(), errBuf_vec[i].get());
 
-            for (std::size_t i = 0; i < engine.size(); i++)
+            for (std::size_t i = 0; i < n; i++)
             {
-                job.add_output(outBuf_vec[i], i);
                 try
                 {
                     future[i].get();
@@ -207,6 +208,7 @@ namespace MatlabPool
                 {
                     job.add_error(errBuf_vec[i], i);
                 }
+                job.add_output(outBuf_vec[i], i);
             }
         }
 
