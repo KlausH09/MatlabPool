@@ -7,11 +7,14 @@
 #include <string>
 #include <functional>
 #include <chrono>
+#include <map>
 
 class TestSuite
 {
     TestSuite(const TestSuite &) = delete;
     TestSuite &operator=(const TestSuite &) = delete;
+
+    static constexpr std::size_t header_length = 74;
 
 public:
     enum class Effort
@@ -21,16 +24,23 @@ public:
         Large,
         Huge
     };
-    class TestSuiteException : public std::exception
-    {
-    };
 
 public:
-    TestSuite() : count(0), failed(0),
-                  count_repeats(0),
-                  maxEffort(Effort::Normal),
-                  prefun([]() {}), postfun([]() {})
+    TestSuite(const std::string &header = "Start Test") : count(0), failed(0),
+                                                          prefun([]() {}), postfun([]() {})
     {
+        std::size_t len1 = 0;
+        std::size_t len2 = 0;
+        if (header.size() + 2 < header_length)
+        {
+            len1 = (header_length - (header.size() + 2)) / 2;
+            len2 = header_length - (header.size() + 2 + len1);
+        }
+        std::cout << std::string(len1, '=') << " " << header << " " << std::string(len2, '=') << std::endl;
+    }
+    ~TestSuite()
+    {
+        std::cout << std::string(header_length, '=');
     }
 
     void set_preFun(std::function<void()> fun)
@@ -43,34 +53,36 @@ public:
         postfun = std::move(fun);
     }
 
-    void set_repeats(std::size_t repeats)
+    void set_countEval(Effort effort, std::size_t count)
     {
-        count_repeats = repeats;
+        count_evaluations[effort] = count;
     }
 
-    void set_maxEffort(Effort val)
+    std::size_t get_failed() const noexcept
     {
-        maxEffort = val;
+        return failed;
     }
 
     template <typename T>
     void run(const std::string &description, Effort effort, T &&operation)
     {
-        if (effort > maxEffort)
-            return;
-        std::cout << "Test " << std::setw(2) << std::right << ++count << ": ";
+        auto flags = std::cout.flags();
+        std::cout << "Test " << std::setw(3) << std::right << ++count << ": ";
         std::cout << std::setw(50) << std::left << description << " ";
+
         try
         {
             ++failed;
             tic();
-            for (std::size_t i = 0; i < count_repeats + 1; i++)
+            for (std::size_t i = 0; i < get_countEval(effort); i++)
             {
                 prefun();
                 operation();
                 postfun();
             }
-            std::cout << "ok, " << std::setprecision(4) << toc() << " sec" << std::endl;
+
+            std::cout.setf(std::ios::fixed | std::ios_base::right);
+            std::cout << "ok " << std::setw(6) << std::setprecision(2) << toc() << " sec" << std::endl;
             --failed;
         }
         catch (std::exception &e)
@@ -81,9 +93,20 @@ public:
         {
             std::cout << "unknown exception" << std::endl;
         }
+        std::cout.flags(flags);
     }
 
 private:
+    std::size_t get_countEval(Effort effort) const
+    {
+        auto it = count_evaluations.find(effort);
+
+        if (it == count_evaluations.end())
+            return 1;
+        else
+            return it->second;
+    }
+
     inline void tic()
     {
         t0 = std::chrono::high_resolution_clock::now();
@@ -99,8 +122,7 @@ private:
     std::size_t count;
     std::size_t failed;
 
-    std::size_t count_repeats;
-    Effort maxEffort;
+    std::map<Effort, std::size_t> count_evaluations;
 
     std::function<void()> prefun;
     std::function<void()> postfun;
@@ -109,7 +131,11 @@ private:
     std::chrono::high_resolution_clock::duration elapsed;
 };
 
-class UnexpectCondition : public TestSuite::TestSuiteException
+class TestSuiteException : public std::exception
+{
+};
+
+class UnexpectCondition : public TestSuiteException
 {
 public:
     UnexpectCondition(const char *msg_)
@@ -135,7 +161,7 @@ private:
 };
 
 template <typename Error>
-class UnexpectException : public TestSuite::TestSuiteException
+class UnexpectException : public TestSuiteException
 {
 public:
     UnexpectException()
