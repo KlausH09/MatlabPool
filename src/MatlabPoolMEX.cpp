@@ -5,31 +5,39 @@ void MexFunction::operator()(matlab::mex::ArgumentList outputs, matlab::mex::Arg
 {
     using namespace MatlabPool;
     MexCommands::CmdID id;
+
     try
     {
+        if (inputs.size() < 1)
+            throw InvalidInputSize(inputs.size());
+
         id = get_scalar<MexCommands::CmdID>(inputs[0]);
     }
-    catch (const std::exception &e)
+    catch (const MatlabPool::Exception &e)
     {
-        throwError("cannot extraced mode");
+        throwError(e.identifier(), e.what());
     }
 
     try
     {
         (this->*MexCommands::get_fun(id))(outputs, inputs);
     }
+    catch (const MatlabPool::Exception &e)
+    {
+        throwError(e.identifier(), e.what());
+    }
     catch (const std::exception &e)
     {
         std::ostringstream os;
         os << "error in MatlabPoolMex::" << MexCommands::get_name(id) << "()\n"
            << e.what();
-        throwError(os.str());
+        throwError("ErrorInCmd", os.str());
     }
     catch (...)
     {
         std::ostringstream os;
         os << "error in MatlabPoolMex::" << MexCommands::get_name(id) << "()";
-        throwError(os.str());
+        throwError("ErrorInCmd", os.str());
     }
 }
 
@@ -48,7 +56,6 @@ void MexFunction::resize(matlab::mex::ArgumentList &outputs, matlab::mex::Argume
         pool = std::unique_ptr<MatlabPool::Pool>(MatlabPool::LibLoader::createPool(nof_worker, options));
     else
         pool->resize(nof_worker, options);
-    return;
 }
 
 void MexFunction::submit(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs)
@@ -78,22 +85,8 @@ void MexFunction::wait(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
     JobID jobid = get_scalar<JobID>(inputs[1]);
     Job job = pool->wait(jobid);
 
+    std::vector<matlab::data::Array> result = job.pop_result();
 
-    std::vector<matlab::data::Array> result;
-
-    try
-    {
-        result = std::move(job.pop_result());
-    }
-    catch (const MatlabPool::JobBase::ExecutionError &e)
-    {
-#ifdef MATLABPOOL_DISP_WORKER_ERROR
-    throwError(job.get_errBuf().str());
-#else
-        throw e;
-#endif  
-    }
-    
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
     disp(job.get_outBuf().str());
 #endif
@@ -102,7 +95,7 @@ void MexFunction::wait(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
 
     for (std::size_t i = 0; i < result.size(); i++)
         result_cell[i] = std::move(result[i]);
-    
+
     outputs[0] = std::move(result_cell);
 }
 
@@ -134,16 +127,16 @@ void MexFunction::eval(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
         throw InvalidInputSize(inputs.size());
 
     MatlabPool::JobEval job(get_string(inputs[1]));
-    pool->eval(job);
+    pool->eval(job); // TODO throw excpetion here
 
     bool error = job.get_status() == MatlabPool::JobEval::Status::Error;
     outputs[0] = factory.createScalar<bool>(error);
 
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-    disp(job.get_outBuf().str());
+    disp(job.get_outBuf().str()); // TODO 
 #endif
 #ifdef MATLABPOOL_DISP_WORKER_ERROR
-    throwError(job.get_errBuf().str());
+    throwError("eval", job.get_errBuf().str()); // TODO delete this
 #endif
 }
 void MexFunction::cancel(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs)
@@ -158,6 +151,9 @@ void MexFunction::cancel(matlab::mex::ArgumentList &outputs, matlab::mex::Argume
 
 void MexFunction::size(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs)
 {
+    if (inputs.size() != 1)
+        throw InvalidInputSize(inputs.size());
+
     if (!pool)
         outputs[0] = factory.createScalar<std::size_t>(0);
     else

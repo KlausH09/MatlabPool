@@ -14,7 +14,7 @@
 
 namespace MatlabPool
 {
-
+    // TODO rename
     class Job : public JobBase
     {
         Job(const Job &) = delete;
@@ -105,7 +105,7 @@ namespace MatlabPool
         const std::vector<matlab::data::Array> &peek_result() const
         {
             if (status == Status::Error)
-                throw ExecutionError(id);
+                throw ExecutionError(id, errorBuf.get());
             ASSERT(status == Status::Done);
 
             return result;
@@ -113,7 +113,7 @@ namespace MatlabPool
         std::vector<matlab::data::Array> pop_result()
         {
             if (status == Status::Error)
-                throw ExecutionError(id);
+                throw ExecutionError(id, errorBuf.get());
             ASSERT(status == Status::Done);
 
             status = Status::DoneEmpty;

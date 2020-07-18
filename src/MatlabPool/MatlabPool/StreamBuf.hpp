@@ -3,28 +3,42 @@
 
 #include <memory>
 #include <sstream>
+#include <string>
 #include <utility>
 #include <locale>
 #include <codecvt>
 
 namespace MatlabPool
 {
+    using StreamBuf = std::basic_stringbuf<char16_t>;
+
+    std::string convertUTF16StringToASCIIString(const std::u16string &str)
+    {
+        std::unique_ptr<char[]> asciistr_ptr(new char[str.size() + 1]);
+        asciistr_ptr.get()[str.size()] = '\0';
+        const char *u16_src = reinterpret_cast<const char *>(str.c_str());
+        for (size_t n = 0; n < str.size(); ++n)
+        {
+            asciistr_ptr.get()[n] = u16_src[2 * n];
+        }
+        return std::string(asciistr_ptr.get());
+    }
 
     class EmptyStreamBuffer
     {
     protected:
-        using SBuf = std::basic_stringbuf<char16_t>;
+
     public:
-        std::shared_ptr<SBuf> get() noexcept
+        std::shared_ptr<StreamBuf> get() const noexcept
         {
-            return std::shared_ptr<SBuf>(nullptr);
+            return std::shared_ptr<StreamBuf>(nullptr);
         }
 
         std::u16string str() const noexcept
         {
             return u"";
         }
-        
+
         bool empty() const noexcept
         {
             return true;
@@ -44,9 +58,9 @@ namespace MatlabPool
     class RealStreamBuffer : public EmptyStreamBuffer
     {
     public:
-        RealStreamBuffer() : buffer(std::make_shared<SBuf>()) {}
+        RealStreamBuffer() : buffer(std::make_shared<StreamBuf>()) {}
 
-        std::shared_ptr<SBuf> get() noexcept
+        std::shared_ptr<StreamBuf> get() const noexcept
         {
             return buffer;
         }
@@ -68,9 +82,9 @@ namespace MatlabPool
             return *this;
         }
 
-        RealStreamBuffer &operator<<(const std::u16string& val)
+        RealStreamBuffer &operator<<(const std::u16string &val)
         {
-            buffer->sputn(&val[0],val.size());
+            buffer->sputn(&val[0], val.size());
             return *this;
         }
 
@@ -81,7 +95,7 @@ namespace MatlabPool
         }
 
     private:
-        std::shared_ptr<SBuf> buffer;
+        std::shared_ptr<StreamBuf> buffer;
     };
 
 } // namespace MatlabPool

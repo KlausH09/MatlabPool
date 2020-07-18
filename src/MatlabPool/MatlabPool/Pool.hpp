@@ -13,11 +13,9 @@ namespace MatlabPool
     protected:
         Pool(){}
     public:
-
-        class Exception : public std::exception
-        {
-        };
-        class JobNotExists : public Exception
+        class PoolException : public Exception
+        {};
+        class JobNotExists : public PoolException
         {
         public:
             JobNotExists(JobID id)
@@ -30,15 +28,23 @@ namespace MatlabPool
             {
                 return msg.c_str();
             }
+            const char *identifier() const noexcept override
+            {
+                return "JobNotExists";
+            }
         private:
             std::string msg;
         };
-        class EmptyPool : public Exception
+        class EmptyPool : public PoolException
         {
         public:
             const char *what() const noexcept override
             {
                 return "pool size is equal zero";
+            }
+            const char *identifier() const noexcept override
+            {
+                return "EmptyPool";
             }
         };
 

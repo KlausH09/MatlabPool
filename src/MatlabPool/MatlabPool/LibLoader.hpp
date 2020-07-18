@@ -1,9 +1,9 @@
 #ifndef MATLABPOOL_LIBLOADER_HPP
 #define MATLABPOOL_LIBLOADER_HPP
 
+// TODO statt ./  MatlabPool/
 #include "./Pool.hpp"
-
-
+#include "./Exception.hpp"
 
 #include <exception>
 #include <string>
@@ -17,7 +17,7 @@
 #define MATLABPOOL_FREELIBRARY(handle) FreeLibrary((handle))
 #else
 #include <dlfcn.h>
-#define MATLABPOOL_HANDLE void*
+#define MATLABPOOL_HANDLE void *
 #define MATLABPOOL_LOADLIBRARY(path) dlopen((path), RTLD_LAZY | RTLD_LOCAL)
 #define MATLABPOOL_LOADLIBFUN(handle, name) dlsym((handle), (name))
 #define MATLABPOOL_FREELIBRARY(handle) dlclose((handle))
@@ -45,7 +45,7 @@ namespace MatlabPool
             if (!constructor)
             {
                 MATLABPOOL_FREELIBRARY(handle);
-                throw CannotLoadFunction(lib_function);
+                throw CannotLoadDLLFunction(lib_function);
             }
         }
 
@@ -56,10 +56,9 @@ namespace MatlabPool
         }
 
     public:
-        class Exception : public std::exception
-        {
-        };
-        class CannotLoadDLL : public Exception
+        class LibLoaderException : public Exception
+        {};
+        class CannotLoadDLL : public LibLoaderException
         {
         public:
             CannotLoadDLL(const char *path)
@@ -73,13 +72,17 @@ namespace MatlabPool
             {
                 return msg.c_str();
             }
+            const char *identifier() const noexcept override
+            {
+                return "CannotLoadDLL";
+            }
         private:
             std::string msg;
         };
-        class CannotLoadFunction : public Exception
+        class CannotLoadDLLFunction : public LibLoaderException
         {
         public:
-            CannotLoadFunction(const char* name)
+            CannotLoadDLLFunction(const char *name)
             {
                 std::ostringstream os;
                 os << "Cannot load Library Function \"" << name << "\"\n";
@@ -89,6 +92,10 @@ namespace MatlabPool
             const char *what() const noexcept override
             {
                 return msg.c_str();
+            }
+            const char *identifier() const noexcept override
+            {
+                return "CannotLoadDLLFunction";
             }
         private:
             std::string msg;
@@ -104,6 +111,7 @@ namespace MatlabPool
         {
             return get().constructor(n, options);
         }
+
     private:
         static void addErrorMsg(std::ostringstream &os)
         {

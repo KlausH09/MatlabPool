@@ -210,6 +210,7 @@ namespace MatlabPool
                 }
                 job.add_output(outBuf_vec[i], i);
             }
+            // TODO throw exception
         }
 
         matlab::data::StructArray get_job_status() override

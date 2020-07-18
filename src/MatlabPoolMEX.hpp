@@ -10,27 +10,39 @@
 
 class MexFunction : public matlab::mex::Function
 {
+    using MatlabPtr = std::shared_ptr<matlab::engine::MATLABEngine>;
+
 public:
-    class Exception : public std::exception
+    class MexFunctionException : public MatlabPool::Exception
     {
+    public:
+        virtual const char *identifier() const noexcept = 0;
     };
-    class EmptyPool : public Exception
+    class EmptyPool : public MexFunctionException
     {
     public:
         const char *what() const noexcept override
         {
             return "MatlabPool is not initialized";
         }
+        const char *identifier() const noexcept override
+        {
+            return "EmptyPool";
+        }
     };
-    class UndefCmd : public Exception
+    class UndefCmd : public MexFunctionException
     {
     public:
         const char *what() const noexcept override
         {
             return "Undefined command";
         }
+        const char *identifier() const noexcept override
+        {
+            return "UndefCMD";
+        }
     };
-    class InvalidInputSize : public Exception
+    class InvalidInputSize : public MexFunctionException
     {
     public:
         InvalidInputSize(std::size_t size)
@@ -43,12 +55,15 @@ public:
         {
             return msg.c_str();
         }
-
+        const char *identifier() const noexcept override
+        {
+            return "InvalidInputSize";
+        }
     private:
         std::string msg;
     };
 
-    class InvalidParameterSize : public Exception
+    class InvalidParameterSize : public MexFunctionException
     {
     public:
         InvalidParameterSize(std::vector<std::size_t> size)
@@ -68,7 +83,10 @@ public:
         {
             return msg.c_str();
         }
-
+        const char *identifier() const noexcept override
+        {
+            return "InvalidParameterSize";
+        }
     private:
         std::string msg;
     };
@@ -108,24 +126,26 @@ private:
         return ((matlab::data::CharArray)data).toUTF16();
     }
 
-    template<typename T>
+    template <typename T>
     void disp(const T &msg)
     {
         matlabPtr->feval(u"disp", 0,
                          std::vector<matlab::data::Array>({factory.createScalar(msg)}));
-
     }
 
-    template<typename T>
-    void throwError(const T &msg)
+    template <typename T>
+    void throwError(const char *id, const T &msg)
     {
+        std::string id_msg{"MatlabPoolMEX:"};
+        id_msg += id;
         matlabPtr->feval(u"error", 0,
-                         std::vector<matlab::data::Array>({factory.createScalar(msg)}));
+                         std::vector<matlab::data::Array>({factory.createScalar(id_msg),
+                                                           factory.createScalar(msg)}));
     }
 
 private:
     matlab::data::ArrayFactory factory;
-    std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
+    MatlabPtr matlabPtr = getEngine();
     std::unique_ptr<MatlabPool::Pool> pool;
 };
 
