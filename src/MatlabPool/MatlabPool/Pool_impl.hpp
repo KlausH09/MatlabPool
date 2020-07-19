@@ -32,8 +32,7 @@ namespace MatlabPool
         PoolImpl(unsigned int n, const std::vector<std::u16string> &options)
             : stop(false),
               worker_ready(n, false),
-              engine(n),
-              job_in_progress(0)
+              engine(n)
         {
             if (n == 0)
                 throw EmptyPool();
@@ -183,7 +182,7 @@ namespace MatlabPool
             futureMap.erase(it);
             job.wait();
 
-            return job;
+            return std::move(job);
         }
 
         void eval(JobEval &job) override
@@ -330,7 +329,6 @@ namespace MatlabPool
         bool stop;                      // mutex_jobs
         std::vector<bool> worker_ready; // mutex_worker
         std::vector<EnginePtr> engine;  // mutex_worker
-        JobID job_in_progress;          // mutex_jobs
 
         std::thread master;
 

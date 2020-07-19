@@ -7,7 +7,8 @@ CXX    := g++
 #C:\ProgramData\MATLAB\SupportPackages\R2019b\3P.instrset\mingw_w64.instrset\bin\g++ 
 
 # Matlab root path
-MatlabRoot := C:\Program Files\MATLAB\R2019b
+MatlabRoot := /usr/local/MATLAB/R2019b
+#MatlabRoot := C:\Program Files\MATLAB\R2019b
 
 # ================================================================
 # ===== end stettings ============================================
@@ -26,11 +27,13 @@ else
         MEXExtension := mexa64
         DLLExtension := so
         MatlabLibraryPath := $(MatlabRoot)/extern/bin/glnxa64
+        MatlabEXE := $(MatlabRoot)\bin\matlab
     endif
     ifeq ($(UNAME_S),Darwin)
         MEXExtension := mexmaci64
         DLLExtension := dylib
         MatlabLibraryPath := $(MatlabRoot)/extern/bin/maci64
+        MatlabEXE := $(MatlabRoot)\bin\matlab.exe
     endif
 endif
 
@@ -48,10 +51,12 @@ DEFINES += -DMATLABPOOL_CHECK_EXIST_BEFORE_WAIT
 CXXFLAGS += -O2 -fwrapv -DNDEBUG
 
 # Linker Settings
-LDFLAGS := -Wl,--no-undefined
-LDTYPE := -shared -static -s
-LINKLIBS := -L"$(MatlabLibraryPath)" -llibmx -llibmex -llibmat -lm -llibmwlapack -llibmwblas -llibMatlabDataArray -llibMatlabEngine 
+LDFLAGS := -Wl,--no-undefined -fPIC
+LDTYPE := -shared -s
 
+# TODO ziwschne linux und windows unterscheiden
+LINKLIBS := -L"$(MatlabLibraryPath)" -lMatlabDataArray -lMatlabEngine -lpthread -ldl
+LINKLIBS += -L"$(MatlabRoot)/bin/glnxa64" -lmx -lmex -lmat -lm -lmwlapack -lmwblas
 
 Test := test.exe
 DLL := MatlabPoolLib.$(DLLExtension)
@@ -64,7 +69,7 @@ $(Test): ./src/$(basename $(Test)).cpp
 	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
 $(DLL): ./src/$(basename $(DLL)).cpp
-	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
+	$(CXX) -o lib$@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
 $(MEX): ./src/$(basename $(MEX)).cpp
 	$(CXX) -o $@ $(DEFINES) $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
@@ -74,6 +79,6 @@ test: build
 	$(MatlabEXE) -nosplash -nojvm -r "test"
 
 clean: 
-	$(RM) .\$(MEX)
-	$(RM) .\$(Test)
-	$(RM) .\$(DLL)
+	$(RM) ./$(MEX)
+	$(RM) ./$(Test)
+	$(RM) ./$(DLL)

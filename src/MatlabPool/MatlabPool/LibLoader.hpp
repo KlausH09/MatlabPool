@@ -7,16 +7,17 @@
 #include <exception>
 #include <string>
 #include <sstream>
+#include <vector>
 
 #ifdef _WIN32
 #include <windows.h>
-#define MATLABPOOL_HANDLE HMODULE
+using Handle = HMODULE;
 #define MATLABPOOL_LOADLIBRARY(path) LoadLibraryA((path))
 #define MATLABPOOL_LOADLIBFUN(handle, name) GetProcAddress((handle), (name))
 #define MATLABPOOL_FREELIBRARY(handle) FreeLibrary((handle))
 #else
 #include <dlfcn.h>
-#define MATLABPOOL_HANDLE void *
+using Handle = void *;
 #define MATLABPOOL_LOADLIBRARY(path) dlopen((path), RTLD_LAZY | RTLD_LOCAL)
 #define MATLABPOOL_LOADLIBFUN(handle, name) dlsym((handle), (name))
 #define MATLABPOOL_FREELIBRARY(handle) dlclose((handle))
@@ -27,7 +28,7 @@ namespace MatlabPool
     class LibLoader
     {
         using Constructor = Pool *(std::size_t, const std::vector<std::u16string> &);
-        static constexpr const char lib_path[] = "MatlabPoolLib.dll";
+        static constexpr const char lib_path[] = "MatlabPoolLib.so"; // TODO windows/linux und lib...
         static constexpr const char lib_function[] = "construct";
 
         LibLoader(const LibLoader &) = delete;
@@ -122,7 +123,7 @@ namespace MatlabPool
         }
 
     private:
-        MATLABPOOL_HANDLE handle;
+        Handle handle;
         Constructor *constructor;
     };
 } // namespace MatlabPool
