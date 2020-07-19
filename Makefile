@@ -19,6 +19,7 @@ ifeq ($(OS),Windows_NT)
     MEXExtension := mexw64
     DLLExtension := dll
     MatlabLibraryPath := $(MatlabRoot)\extern\lib\win64\mingw64
+    MatlabEXE := $(MatlabRoot)\bin\matlab.exe
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
@@ -44,10 +45,7 @@ DEFINES += -DMATLABPOOL_DISP_WORKER_OUTPUT
 DEFINES += -DMATLABPOOL_DISP_WORKER_ERROR
 DEFINES += -DMATLABPOOL_CHECK_EXIST_BEFORE_WAIT
 
-
-# TODO !!!!!
-#CXXFLAGS += -g
-#CXXFLAGS += -O2 -fwrapv -DNDEBUG
+CXXFLAGS += -O2 -fwrapv -DNDEBUG
 
 # Linker Settings
 LDFLAGS := -Wl,--no-undefined
@@ -73,6 +71,7 @@ $(MEX): ./src/$(basename $(MEX)).cpp
 
 test: build
 	./$(Test)
+	$(MatlabEXE) -nosplash -nojvm -r "test"
 
 clean: 
 	$(RM) .\$(MEX)

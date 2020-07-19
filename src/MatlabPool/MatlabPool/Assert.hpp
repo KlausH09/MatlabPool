@@ -4,8 +4,8 @@
 #include <iostream>
 
 #ifdef NDEBUG
-#define MATLABPOOL_ASSERT (condition)((void)0)
-#define MATLABPOOL_ERROR (msg)((void)0)
+#define MATLABPOOL_ASSERT(condition) ((void)0)
+#define MATLABPOOL_ERROR(msg) ((void)0)
 #else
 #define MATLABPOOL_ASSERT(condition) (safe_assert((condition), #condition, \
                                                   __FILE__, __LINE__, __func__))

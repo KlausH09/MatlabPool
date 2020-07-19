@@ -40,7 +40,7 @@ public:
     }
     ~TestSuite()
     {
-        std::cout << std::string(header_length, '=');
+        std::cout << std::string(header_length, '=') << std::endl;
     }
 
     void set_preFun(std::function<void()> fun)

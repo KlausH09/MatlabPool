@@ -4,7 +4,7 @@
 void MexFunction::operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)
 {
     using namespace MatlabPool;
-    MexCommands::CmdID id;
+    MexCommands::CmdID id = 0;
 
     try
     {
