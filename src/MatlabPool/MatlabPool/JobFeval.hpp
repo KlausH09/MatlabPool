@@ -14,7 +14,6 @@
 
 namespace MatlabPool
 {
-    // TODO rename
     class JobFeval : public JobBase
     {
         JobFeval(const JobFeval &) = delete;

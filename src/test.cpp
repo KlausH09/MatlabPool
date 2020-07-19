@@ -32,10 +32,15 @@ void run_tests()
     Pool *pool = pool_guard.get();
 
     test.set_postFun([&]() {
-        std::size_t count_jobs = pool->get_job_status()[0]["JobID"].getNumberOfElements();
+        using StatusType = std::underlying_type<JobFeval::Status>::type;
+        auto status = pool->get_job_status();
+        std::size_t count_jobs = status[0]["JobID"].getNumberOfElements();
         if (count_jobs == 1)
         {
-            // TODO
+            matlab::data::TypedArray<StatusType> jobStatus = status[0]["Status"];
+            JobFeval::Status jobStatusVal = static_cast<JobFeval::Status>(StatusType(jobStatus[0]));
+            UnexpectCondition::Assert(jobStatusVal == JobFeval::Status::Canceled,
+                                      "there are a job in the pool");
             return;
         }
         UnexpectCondition::Assert(0 == count_jobs, "there are jobs in the pool");
@@ -135,7 +140,7 @@ void run_tests()
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
 #else
-        UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
+            UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
 #endif
     });
 
@@ -154,7 +159,10 @@ void run_tests()
 
     test.run("invalid eval", Effort::Normal, [&]() {
         JobEval job(u"pwwd");
-        pool->eval(job);
+
+        UnexpectException<JobBase::ExecutionError>::check([&]() {
+            pool->eval(job);
+        });
 
         UnexpectCondition::Assert(job.get_status() == JobEval::Status::Error, "there was no error during \"eval\"");
         UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
@@ -234,7 +242,7 @@ void run_tests()
         }
         else
             UnexpectCondition("unexpect jobs in pool");
-    }); 
+    });
 
     test.run("get worker status", Effort::Large, [&]() {
         using Float = double;
