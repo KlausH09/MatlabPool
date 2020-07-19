@@ -8,7 +8,7 @@
 #include <ostream>
 
 #include "MatlabPool/JobBase.hpp"
-#include "assert.hpp"
+#include "MatlabPool/Assert.hpp"
 
 #include "MatlabDataArray.hpp"
 
@@ -68,7 +68,7 @@ namespace MatlabPool
         }
         void set_AssignToWorker_status()
         {
-            ASSERT(status == Status::Wait);
+            MATLABPOOL_ASSERT(status == Status::Wait);
             status = Status::AssignToWorker;
         }
 
@@ -85,7 +85,7 @@ namespace MatlabPool
         {
             if (val >= 0)
             {
-                ASSERT(status == Status::AssignToWorker);
+                MATLABPOOL_ASSERT(status == Status::AssignToWorker);
                 status = Status::InProgress;
             }
             workerID = val;
@@ -105,7 +105,7 @@ namespace MatlabPool
         {
             if (status == Status::Error)
                 throw ExecutionError(id, errorBuf.get());
-            ASSERT(status == Status::Done);
+            MATLABPOOL_ASSERT(status == Status::Done);
 
             return result;
         }
@@ -113,7 +113,7 @@ namespace MatlabPool
         {
             if (status == Status::Error)
                 throw ExecutionError(id, errorBuf.get());
-            ASSERT(status == Status::Done);
+            MATLABPOOL_ASSERT(status == Status::Done);
 
             status = Status::DoneEmpty;
             return std::move(result);

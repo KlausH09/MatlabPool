@@ -5,8 +5,7 @@
 #include <chrono>
 
 #include "MatlabPool/JobFeval.hpp"
-
-#include "assert.hpp"
+#include "MatlabPool/Assert.hpp"
 
 #include "MatlabDataArray.hpp"
 #include "MatlabEngine.hpp"
@@ -61,7 +60,7 @@ namespace MatlabPool
             }
             catch(...)
             {
-                ERROR("unexpect exception");
+                MATLABPOOL_ERROR("unexpect exception");
             }
         }
         void cancel() noexcept

@@ -18,7 +18,7 @@
 #include "MatlabPool/JobFeval.hpp"
 #include "MatlabPool/JobFuture.hpp"
 #include "MatlabPool/EngineHack.hpp"
-#include "assert.hpp"
+#include "MatlabPool/Assert.hpp"
 
 namespace MatlabPool
 {
@@ -91,7 +91,7 @@ namespace MatlabPool
                     }
                     else
                     {
-                        ERROR("unexpect job status");
+                        MATLABPOOL_ERROR("unexpect job status");
                     }
                 }
             });
@@ -281,7 +281,7 @@ namespace MatlabPool
                     else if (it_job->get_status() == JobFeval::Status::Wait)
                         jobs.erase(it_job);
                     else
-                        ERROR("unexpect job status");
+                        MATLABPOOL_ERROR("unexpect job status");
                     return;
                 }
             }
