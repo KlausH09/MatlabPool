@@ -14,10 +14,10 @@
 #include <type_traits>
 #include <iomanip>
 
-#include "./Pool.hpp"
-#include "./JobFeval.hpp"
-#include "./JobFuture.hpp"
-#include "./EngineHack.hpp"
+#include "MatlabPool/Pool.hpp"
+#include "MatlabPool/JobFeval.hpp"
+#include "MatlabPool/JobFuture.hpp"
+#include "MatlabPool/EngineHack.hpp"
 #include "assert.hpp"
 
 namespace MatlabPool

@@ -5,8 +5,8 @@
 #include <vector>
 #include <ostream>
 
-#include "./StreamBuf.hpp"
-#include "./Exception.hpp"
+#include "MatlabPool/StreamBuf.hpp"
+#include "MatlabPool/Exception.hpp"
 
 #include "MatlabDataArray.hpp"
 

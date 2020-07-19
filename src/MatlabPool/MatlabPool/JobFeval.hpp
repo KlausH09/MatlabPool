@@ -7,7 +7,7 @@
 #include <exception>
 #include <ostream>
 
-#include "./JobBase.hpp"
+#include "MatlabPool/JobBase.hpp"
 #include "assert.hpp"
 
 #include "MatlabDataArray.hpp"

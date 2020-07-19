@@ -1,8 +1,8 @@
 #ifndef MATLABPOOL_POOL_HPP
 #define MATLABPOOL_POOL_HPP
 
-#include "./JobFeval.hpp"
-#include "./JobEval.hpp"
+#include "MatlabPool/JobFeval.hpp"
+#include "MatlabPool/JobEval.hpp"
 
 namespace MatlabPool
 {

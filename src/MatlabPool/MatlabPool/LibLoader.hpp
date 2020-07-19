@@ -2,8 +2,8 @@
 #define MATLABPOOL_LIBLOADER_HPP
 
 // TODO statt ./  MatlabPool/
-#include "./Pool.hpp"
-#include "./Exception.hpp"
+#include "MatlabPool/Pool.hpp"
+#include "MatlabPool/Exception.hpp"
 
 #include <exception>
 #include <string>

@@ -4,7 +4,7 @@
 #include <future>
 #include <chrono>
 
-#include "./JobFeval.hpp"
+#include "MatlabPool/JobFeval.hpp"
 
 #include "assert.hpp"
 
