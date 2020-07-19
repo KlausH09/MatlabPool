@@ -15,7 +15,7 @@
 #include <iomanip>
 
 #include "./Pool.hpp"
-#include "./Job.hpp"
+#include "./JobFeval.hpp"
 #include "./JobFuture.hpp"
 #include "./EngineHack.hpp"
 #include "assert.hpp"
@@ -70,13 +70,13 @@ namespace MatlabPool
                     lock_jobs.lock();
 
                     // check if job is canceled during waitting
-                    if (job.get_status() == Job::Status::Canceled)
+                    if (job.get_status() == JobFeval::Status::Canceled)
                     {
                         jobs.pop_front();
                         std::unique_lock<std::mutex> lock_worker(mutex_worker);
                         worker_ready[workerID] = true;
                     }
-                    else if (job.get_status() == Job::Status::AssignToWorker)
+                    else if (job.get_status() == JobFeval::Status::AssignToWorker)
                     {
                         job.set_workerID(workerID); // set also job status to "InProgress"
                         worker->eval_job(job, [=]() {
@@ -155,7 +155,7 @@ namespace MatlabPool
             return engine.size();
         }
 
-        JobID submit(Job &&job) override
+        JobID submit(JobFeval &&job) override
         {
             JobID job_id = job.get_ID();
             std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
@@ -164,7 +164,7 @@ namespace MatlabPool
             return job_id;
         }
 
-        Job wait(JobID id) override
+        JobFeval wait(JobID id) override
         {
 #ifdef MATLABPOOL_CHECK_EXIST_BEFORE_WAIT
             if (!exists(id))
@@ -218,7 +218,7 @@ namespace MatlabPool
             std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
             std::size_t n = jobs.size() + futureMap.size();
 
-            using StatusType = std::underlying_type<Job::Status>::type;
+            using StatusType = std::underlying_type<JobFeval::Status>::type;
 
             auto jobID = factory.createArray<JobID>({n});
             auto status = factory.createArray<StatusType>({n});
@@ -274,9 +274,9 @@ namespace MatlabPool
             {
                 if (it_job->get_ID() == jobID)
                 {
-                    if (it_job->get_status() == Job::Status::AssignToWorker)
+                    if (it_job->get_status() == JobFeval::Status::AssignToWorker)
                         it_job->cancel();
-                    else if (it_job->get_status() == Job::Status::Wait)
+                    else if (it_job->get_status() == JobFeval::Status::Wait)
                         jobs.erase(it_job);
                     else
                         ERROR("unexpect job status");

@@ -1,7 +1,7 @@
 #ifndef MATLABPOOL_POOL_HPP
 #define MATLABPOOL_POOL_HPP
 
-#include "./Job.hpp"
+#include "./JobFeval.hpp"
 #include "./JobEval.hpp"
 
 namespace MatlabPool
@@ -51,8 +51,8 @@ namespace MatlabPool
         virtual ~Pool(){}
         virtual void resize(unsigned int n_new, const std::vector<std::u16string> &options) = 0;
         virtual std::size_t size() const = 0;
-        virtual JobID submit(Job &&job) = 0;
-        virtual Job wait(JobID job_id) = 0;
+        virtual JobID submit(JobFeval &&job) = 0;
+        virtual JobFeval wait(JobID job_id) = 0;
         virtual void eval(JobEval &job) = 0;
         virtual matlab::data::StructArray get_job_status() = 0;
         virtual matlab::data::StructArray get_worker_status() = 0;

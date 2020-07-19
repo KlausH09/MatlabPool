@@ -4,7 +4,7 @@
 #include <future>
 #include <chrono>
 
-#include "./Job.hpp"
+#include "./JobFeval.hpp"
 
 #include "assert.hpp"
 
@@ -14,17 +14,17 @@
 namespace MatlabPool
 {
 
-    class JobFuture : public Job
+    class JobFuture : public JobFeval
     {
         using Result = std::vector<matlab::data::Array>;
         using Future = matlab::engine::FutureResult<Result>;
 
     public:
-        JobFuture() : Job() {}
-        JobFuture(Job &&job) noexcept : Job()
+        JobFuture() : JobFeval() {}
+        JobFuture(JobFeval &&job) noexcept : JobFeval()
         {
             using std::swap;
-            std::swap(static_cast<Job &>(*this), job);
+            std::swap(static_cast<JobFeval &>(*this), job);
         }
         JobFuture(JobFuture &&other) noexcept : JobFuture()
         {
@@ -40,7 +40,7 @@ namespace MatlabPool
         friend void swap(JobFuture &j1, JobFuture &j2) noexcept
         {
             using std::swap;
-            swap(static_cast<Job &>(j1), static_cast<Job &>(j2));
+            swap(static_cast<JobFeval &>(j1), static_cast<JobFeval &>(j2));
             swap(j1.future, j2.future);
         }
 

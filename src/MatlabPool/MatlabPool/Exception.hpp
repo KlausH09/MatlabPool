@@ -8,7 +8,7 @@ namespace MatlabPool
     class Exception : public std::exception
     {
     public:
-        virtual const char *identifier() const noexcept = 0; // TODO Testen ob virtual parameter auch moeglich ist
+        virtual const char *identifier() const noexcept = 0;
     };
 
 } // namespace MatlabPool

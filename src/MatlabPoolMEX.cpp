@@ -67,7 +67,7 @@ void MexFunction::submit(matlab::mex::ArgumentList &outputs, matlab::mex::Argume
     if (inputs.size() < 3)
         throw InvalidInputSize(inputs.size());
 
-    JobID jobid = pool->submit(Job(get_string(inputs[1]),
+    JobID jobid = pool->submit(JobFeval(get_string(inputs[1]),
                                    get_scalar<std::size_t>(inputs[2]),
                                    {inputs.begin() + 3, inputs.end()}));
     outputs[0] = factory.createScalar<JobID>(jobid);
@@ -83,7 +83,7 @@ void MexFunction::wait(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
         throw InvalidInputSize(inputs.size());
 
     JobID jobid = get_scalar<JobID>(inputs[1]);
-    Job job = pool->wait(jobid);
+    JobFeval job = pool->wait(jobid);
 
     std::vector<matlab::data::Array> result = job.pop_result();
 

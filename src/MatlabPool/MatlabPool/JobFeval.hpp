@@ -15,10 +15,10 @@
 namespace MatlabPool
 {
     // TODO rename
-    class Job : public JobBase
+    class JobFeval : public JobBase
     {
-        Job(const Job &) = delete;
-        Job &operator=(const Job &) = delete;
+        JobFeval(const JobFeval &) = delete;
+        JobFeval &operator=(const JobFeval &) = delete;
 
     public:
         enum class Status : uint8_t
@@ -34,8 +34,8 @@ namespace MatlabPool
         };
 
     public:
-        Job() noexcept : JobBase(), status(Status::Empty), workerID(-1){};
-        Job(std::u16string cmd, std::size_t nlhs, std::vector<matlab::data::Array> &&args) : JobBase(cmd),
+        JobFeval() noexcept : JobBase(), status(Status::Empty), workerID(-1){};
+        JobFeval(std::u16string cmd, std::size_t nlhs, std::vector<matlab::data::Array> &&args) : JobBase(cmd),
                                                                                              status(Status::Wait),
                                                                                              nlhs(nlhs),
                                                                                              args(std::move(args)),
@@ -44,20 +44,20 @@ namespace MatlabPool
         {
         }
 
-        Job(Job &&other) noexcept : Job()
+        JobFeval(JobFeval &&other) noexcept : JobFeval()
         {
             using std::swap;
             swap(*this, other);
         }
 
-        Job &operator=(Job &&other) noexcept
+        JobFeval &operator=(JobFeval &&other) noexcept
         {
             using std::swap;
             swap(*this, other);
             return *this;
         }
 
-        friend void swap(Job &j1, Job &j2) noexcept
+        friend void swap(JobFeval &j1, JobFeval &j2) noexcept
         {
             using std::swap;
             swap(static_cast<JobBase &>(j1), static_cast<JobBase &>(j2));
