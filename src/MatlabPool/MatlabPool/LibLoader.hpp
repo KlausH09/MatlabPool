@@ -1,7 +1,6 @@
 #ifndef MATLABPOOL_LIBLOADER_HPP
 #define MATLABPOOL_LIBLOADER_HPP
 
-// TODO statt ./  MatlabPool/
 #include "MatlabPool/Pool.hpp"
 #include "MatlabPool/Exception.hpp"
 

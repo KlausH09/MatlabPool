@@ -42,6 +42,16 @@ namespace MatlabPool
         class ExecutionError : public JobBaseException
         {
         public:
+            ExecutionError(std::shared_ptr<StreamBuf> buffer)
+            {
+                std::ostringstream os;
+                os << "an error has occurred during execution";
+                if(buffer)
+                {
+                    os << '\n' << convertUTF16StringToASCIIString(buffer->str());
+                }
+                msg = os.str();
+            }
             ExecutionError(JobID id, std::shared_ptr<StreamBuf> buffer)
             {
                 std::ostringstream os;

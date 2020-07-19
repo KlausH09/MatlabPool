@@ -210,7 +210,9 @@ namespace MatlabPool
                 }
                 job.add_output(outBuf_vec[i], i);
             }
-            // TODO throw exception
+
+            if(job.get_status() == JobEval::Status::Error)
+                throw JobBase::ExecutionError(job.get_errBuf().get());
         }
 
         matlab::data::StructArray get_job_status() override

@@ -87,9 +87,8 @@ void MexFunction::wait(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
 
     std::vector<matlab::data::Array> result = job.pop_result();
 
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-    disp(job.get_outBuf().str());
-#endif
+    if (!job.get_outBuf().empty())
+        disp(job.get_outBuf().str());
 
     auto result_cell = factory.createCellArray({result.size()});
 
@@ -127,17 +126,10 @@ void MexFunction::eval(matlab::mex::ArgumentList &outputs, matlab::mex::Argument
         throw InvalidInputSize(inputs.size());
 
     MatlabPool::JobEval job(get_string(inputs[1]));
-    pool->eval(job); // TODO throw excpetion here
+    pool->eval(job);
 
-    bool error = job.get_status() == MatlabPool::JobEval::Status::Error;
-    outputs[0] = factory.createScalar<bool>(error);
-
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-    disp(job.get_outBuf().str()); // TODO 
-#endif
-#ifdef MATLABPOOL_DISP_WORKER_ERROR
-    throwError("eval", job.get_errBuf().str()); // TODO delete this
-#endif
+    if (!job.get_outBuf().empty())
+        disp(job.get_outBuf().str());
 }
 void MexFunction::cancel(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs)
 {
