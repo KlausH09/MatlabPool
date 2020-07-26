@@ -38,7 +38,7 @@ endif
 # Compiler Settings
 DEFINES := -DMATLAB_DEFAULT_RELEASE=R2017b -DUSE_MEX_CMD
 MEXDEFINES := -DMATLAB_MEX_FILE
-INCLUDE := -I"$(MatlabRoot)/extern/include" -I./src -I./src/MatlabPool
+INCLUDE := -I"$(MatlabRoot)/extern/include" -I./src -I./include
 CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -m64 -Wall
 
 DEFINES += -DMATLABPOOL_DISP_WORKER_OUTPUT
@@ -54,19 +54,26 @@ LINKLIBS := -L"$(MatlabLibraryPath)" -llibmx -llibmex -llibmat -lm -llibmwlapack
 
 
 Test := test.exe
-DLL := MatlabPoolLib.$(DLLExtension)
-MEX := MatlabPoolMEX.$(MEXExtension)
+DLL := ./lib/MatlabPoolLib.$(DLLExtension)
+MEX := ./lib/MatlabPoolMEX.$(MEXExtension)
+
+DEFINES += -DMATLABPOOL_DISP_WORKER_OUTPUT
+DEFINES += -DMATLABPOOL_DISP_WORKER_ERROR
+DEFINES += -DMATLABPOOL_CHECK_EXIST_BEFORE_WAIT
+DEFINES += -DMATLABPOOL_DLL_PATH="\"$(DLL)\""
 
 build: $(DLL) $(Test) $(MEX)
+
+# TODO mkdir lib
 
 # engine test
 $(Test): ./src/$(basename $(Test)).cpp
 	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
-$(DLL): ./src/$(basename $(DLL)).cpp
+$(DLL): ./src/$(basename $(notdir $(DLL))).cpp
 	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
-$(MEX): ./src/$(basename $(MEX)).cpp
+$(MEX): ./src/$(basename $(notdir $(MEX))).cpp
 	$(CXX) -o $@ $(DEFINES) $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
 test: build

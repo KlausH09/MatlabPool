@@ -10,55 +10,31 @@
 
 class MexFunction : public matlab::mex::Function
 {
+    using ArgumentList = matlab::mex::ArgumentList;
     using MatlabPtr = std::shared_ptr<matlab::engine::MATLABEngine>;
 
 public:
     class MexFunctionException : public MatlabPool::Exception
     {
-    public:
-        virtual const char *identifier() const noexcept = 0;
     };
     class EmptyPool : public MexFunctionException
     {
     public:
-        const char *what() const noexcept override
-        {
-            return "MatlabPool is not initialized";
-        }
-        const char *identifier() const noexcept override
-        {
-            return "EmptyPool";
-        }
+        const char *what() const noexcept override;
+        const char *identifier() const noexcept override;
     };
     class UndefCmd : public MexFunctionException
     {
     public:
-        const char *what() const noexcept override
-        {
-            return "Undefined command";
-        }
-        const char *identifier() const noexcept override
-        {
-            return "UndefCMD";
-        }
+        const char *what() const noexcept override;
+        const char *identifier() const noexcept override;
     };
     class InvalidInputSize : public MexFunctionException
     {
     public:
-        InvalidInputSize(std::size_t size)
-        {
-            std::ostringstream os;
-            os << "invalid input size: " << size;
-            msg = os.str();
-        }
-        const char *what() const noexcept override
-        {
-            return msg.c_str();
-        }
-        const char *identifier() const noexcept override
-        {
-            return "InvalidInputSize";
-        }
+        InvalidInputSize(std::size_t size);
+        const char *what() const noexcept override;
+        const char *identifier() const noexcept override;
     private:
         std::string msg;
     };
@@ -66,27 +42,9 @@ public:
     class InvalidParameterSize : public MexFunctionException
     {
     public:
-        InvalidParameterSize(std::vector<std::size_t> size)
-        {
-            std::ostringstream os;
-            os << "invalid parameter size: (";
-            std::string seperator = "";
-            for (auto s : size)
-            {
-                os << seperator << s;
-                seperator = ",";
-            }
-            os << ")";
-            msg = os.str();
-        }
-        const char *what() const noexcept override
-        {
-            return msg.c_str();
-        }
-        const char *identifier() const noexcept override
-        {
-            return "InvalidParameterSize";
-        }
+        InvalidParameterSize(std::vector<std::size_t> size);
+        const char *what() const noexcept override;
+        const char *identifier() const noexcept override;
     private:
         std::string msg;
     };
@@ -94,23 +52,23 @@ public:
 public:
     MexFunction()
     {
-        //mexLock();
+        mexLock();
     }
     ~MexFunction()
     {
-        //mexUnlock();
+        mexUnlock();
     }
 
-    void operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs);
+    void operator()(ArgumentList outputs, ArgumentList inputs);
 
-    void resize(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
-    void submit(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
-    void wait(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
-    void statusJobs(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
-    void statusWorker(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
-    void eval(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
-    void cancel(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
-    void size(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
+    void resize(ArgumentList &outputs, ArgumentList &inputs);
+    void submit(ArgumentList &outputs, ArgumentList &inputs);
+    void wait(ArgumentList &outputs, ArgumentList &inputs);
+    void statusJobs(ArgumentList &outputs, ArgumentList &inputs);
+    void statusWorker(ArgumentList &outputs, ArgumentList &inputs);
+    void eval(ArgumentList &outputs, ArgumentList &inputs);
+    void cancel(ArgumentList &outputs, ArgumentList &inputs);
+    void size(ArgumentList &outputs, ArgumentList &inputs);
 
 private:
     template <typename T>
@@ -148,5 +106,60 @@ private:
     MatlabPtr matlabPtr = getEngine();
     std::unique_ptr<MatlabPool::Pool> pool;
 };
+
+const char *MexFunction::EmptyPool::what() const noexcept
+{
+    return "MatlabPool is not initialized";
+}
+const char *MexFunction::EmptyPool::identifier() const noexcept
+{
+    return "EmptyPool";
+}
+
+const char *MexFunction::UndefCmd::what() const noexcept
+{
+    return "Undefined command";
+}
+const char *MexFunction::UndefCmd::identifier() const noexcept
+{
+    return "UndefCMD";
+}
+
+MexFunction::InvalidInputSize::InvalidInputSize(std::size_t size)
+{
+    std::ostringstream os;
+    os << "invalid input size: " << size;
+    msg = os.str();
+}
+const char *MexFunction::InvalidInputSize::what() const noexcept
+{
+    return msg.c_str();
+}
+const char *MexFunction::InvalidInputSize::identifier() const noexcept
+{
+    return "InvalidInputSize";
+}
+
+MexFunction::InvalidParameterSize::InvalidParameterSize(std::vector<std::size_t> size)
+{
+    std::ostringstream os;
+    os << "invalid parameter size: (";
+    std::string seperator = "";
+    for (auto s : size)
+    {
+        os << seperator << s;
+        seperator = ",";
+    }
+    os << ")";
+    msg = os.str();
+}
+const char *MexFunction::InvalidParameterSize::what() const noexcept
+{
+    return msg.c_str();
+}
+const char *MexFunction::InvalidParameterSize::identifier() const noexcept
+{
+    return "InvalidParameterSize";
+}
 
 #endif

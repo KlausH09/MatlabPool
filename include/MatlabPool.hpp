@@ -5,6 +5,6 @@
 #include "MatlabPool/JobFeval.hpp"
 #include "MatlabPool/JobEval.hpp"
 #include "MatlabPool/Pool.hpp"
-#include "MatlabPool/LibLoader.hpp"
+#include "MatlabPool/PoolLibLoader.hpp"
 
 #endif 

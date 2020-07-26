@@ -28,7 +28,7 @@ void run_tests()
     const unsigned int nof_worker = 2;
     std::vector<std::u16string> options = {u"-nojvm", u"-nosplash"};
 
-    auto pool_guard = std::unique_ptr<Pool>(LibLoader::createPool(nof_worker, options));
+    auto pool_guard = std::unique_ptr<Pool>(PoolLibLoader::createPool(nof_worker, options));
     Pool *pool = pool_guard.get();
 
     test.set_postFun([&]() {
@@ -107,7 +107,7 @@ void run_tests()
         for (JobID &i : jobid)
             i = pool->submit(JobFeval(u"pause", 0, {factory.createScalar<double>(0.01)}));
 
-        pool_guard = std::unique_ptr<Pool>(LibLoader::createPool(nof_worker, options));
+        pool_guard = std::unique_ptr<Pool>(PoolLibLoader::createPool(nof_worker, options));
         pool = pool_guard.get();
     });
 

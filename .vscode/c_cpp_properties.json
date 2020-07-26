@@ -22,7 +22,7 @@
                 "${default}",
                 "C:\\Program Files\\MATLAB\\R2019b\\extern\\include",
                 "./src",
-                "./src/MatlabPool",
+                "./include",
                 "C:\\ProgramData\\MATLAB\\SupportPackages\\R2019b\\3P.instrset\\mingw_w64.instrset\\x86_64-w64-mingw32\\include"
             ],
             "cStandard": "c11",

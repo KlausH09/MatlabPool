@@ -19,6 +19,7 @@ classdef MatlabPool < handle
     
     methods
         function obj = MatlabPool(n)
+            addpath([fileparts(mfilename('fullpath')) '/lib'])
             resize(obj,n)
         end
         
