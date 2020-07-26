@@ -5,6 +5,7 @@ global N pool
 
 N = 50; % count of jobs in a single test
 pool = MatlabPool(2);
+pool.clear(); % cancel all jobs
 
 count_eval.Small = 100;
 count_eval.Normal = 30;
@@ -22,6 +23,11 @@ while(true)
 
     fprintf('run %9s...',name)
     fun();
+    status = pool.statusJobs;
+    if ~all(structfun(@(x)length(x),status) == 0)
+        fprintf('there are jobs in the pool\n')
+        error('there are jobs in the pool')
+    end
     fprintf('passed\n')
     i = i+1;
 end
@@ -214,4 +220,13 @@ function test_15() %#ok
         result = pool.wait(id(i));
         assert(abs(result{1}-sqrt(i)) < eps)
     end
+end
+
+%% Test 16: clear pool
+function test_16() %#ok
+    global N pool
+    for i = N:-1:1
+        pool.submit('sqrt',1,i);
+    end
+    pool.clear();
 end

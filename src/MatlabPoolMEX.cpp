@@ -154,3 +154,12 @@ void MexFunction::size(ArgumentList &outputs, ArgumentList &inputs)
     else
         outputs[0] = factory.createScalar<std::size_t>(pool->size());
 }
+
+void MexFunction::clear(ArgumentList &outputs, ArgumentList &inputs)
+{
+    if (inputs.size() != 1)
+        throw InvalidInputSize(inputs.size());
+
+    if (pool)
+        pool->clear();
+}

@@ -57,6 +57,7 @@ namespace MatlabPool
         virtual matlab::data::StructArray get_job_status() = 0;
         virtual matlab::data::StructArray get_worker_status() = 0;
         virtual void cancel(JobID jobID) = 0;
+        virtual void clear() = 0;
     };
 } // namespace MatlabPool
 

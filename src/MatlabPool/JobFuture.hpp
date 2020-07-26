@@ -36,6 +36,10 @@ namespace MatlabPool
             swap(*this, other);
             return *this;
         }
+        ~JobFuture()
+        {
+            cancel();
+        }
         friend void swap(JobFuture &j1, JobFuture &j2) noexcept
         {
             using std::swap;

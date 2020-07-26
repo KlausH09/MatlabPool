@@ -111,6 +111,15 @@ void run_tests()
         pool = pool_guard.get();
     });
 
+    test.run("cancel all jobs", Effort::Normal, [&]() {
+        using Float = float;
+        std::array<JobID, N> jobid;
+        for (std::size_t i = 0; i < N; i++)
+            jobid[i] = pool->submit(JobFeval(u"sqrt", 1, {factory.createScalar<Float>(Float(i))}));
+
+        pool->clear();
+    });
+
     test.run("empty pool size", Effort::Small, [&]() {
         UnexpectException<Pool::EmptyPool>::check([&]() {
             pool->resize(0, options);

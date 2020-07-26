@@ -69,6 +69,7 @@ public:
     void eval(ArgumentList &outputs, ArgumentList &inputs);
     void cancel(ArgumentList &outputs, ArgumentList &inputs);
     void size(ArgumentList &outputs, ArgumentList &inputs);
+    void clear(ArgumentList &outputs, ArgumentList &inputs);
 
 private:
     template <typename T>

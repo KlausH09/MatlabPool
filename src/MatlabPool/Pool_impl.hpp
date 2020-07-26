@@ -31,6 +31,7 @@ namespace MatlabPool
     public:
         PoolImpl(unsigned int n, const std::vector<std::u16string> &options)
             : stop(false),
+              sleep(false),
               worker_ready(n, false),
               engine(n),
               job_in_progress(0)
@@ -47,7 +48,7 @@ namespace MatlabPool
                 for (;;)
                 {
                     std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
-                    while (!stop && jobs.empty())
+                    while ((!stop && jobs.empty()) || sleep)
                         cv_queue.wait(lock_jobs);
 
                     if (stop)
@@ -109,40 +110,48 @@ namespace MatlabPool
             // cancel jobs
             {
                 std::unique_lock<std::mutex> lock(mutex_jobs);
-                for (auto &e : futureMap)
-                    e.second.cancel();
+                futureMap.clear();
             }
         }
 
         void resize(unsigned int n_new, const std::vector<std::u16string> &options) override
         {
+            std::size_t n_old = engine.size();
             if (n_new == 0)
                 throw EmptyPool();
-            if (n_new == engine.size())
-                return;
 
-            std::unique_lock<std::mutex> lock_worker(mutex_worker);
-
-            if (n_new < engine.size())
+            if (n_new < n_old)
             {
-                // remove the last engines, because the engines notify the master with
-                // their index, so it is not a good idea to remove e.g. the first engine
-
                 // block the master thread to avoid new job assignments
-                std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
-
-                for (std::size_t i = engine.size() - 1; n_new <= i; i--)
                 {
-                    while (!worker_ready[i])
-                        cv_worker.wait(lock_worker);
-                    engine.pop_back();
-                    worker_ready.pop_back();
+                    std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
+                    sleep = true;
+                }
+
+                {
+                    std::unique_lock<std::mutex> lock_worker(mutex_worker);
+                    // remove the last engines, because the engines notify the master with
+                    // their index, so it is not a good idea to remove e.g. the first engine
+                    for (std::size_t i = engine.size() - 1; n_new <= i; i--)
+                    {
+                        while (!worker_ready[i])
+                            cv_worker.wait(lock_worker);
+                        engine.pop_back();
+                        worker_ready.pop_back();
+                    }
+                }
+
+                // unblock the master thread
+                {
+                    std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
+                    sleep = false;
+                    cv_queue.notify_one();
                 }
             }
-
-            if (n_new > engine.size())
+            else if (n_new > n_old)
             {
-                for (std::size_t i = engine.size(); i < n_new; i++)
+                std::unique_lock<std::mutex> lock_worker(mutex_worker);
+                for (std::size_t i = n_old; i < n_new; i++)
                 {
                     engine.push_back(std::make_unique<EngineHack>(options));
                     worker_ready.push_back(true);
@@ -166,10 +175,9 @@ namespace MatlabPool
 
         JobFeval wait(JobID id) override
         {
-#ifdef MATLABPOOL_CHECK_EXIST_BEFORE_WAIT
             if (!exists(id))
                 throw JobNotExists(id);
-#endif
+
             std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
 
             decltype(futureMap)::iterator it;
@@ -196,7 +204,9 @@ namespace MatlabPool
             std::vector<matlab::engine::FutureResult<void>> future(n);
 
             for (std::size_t i = 0; i < n; i++)
-                future[i] = engine[i]->evalAsync(job.get_cmd(), outBuf_vec[i].get(), errBuf_vec[i].get());
+                future[i] = engine[i]->evalAsync(job.get_cmd(),
+                                                 outBuf_vec[i].get(),
+                                                 errBuf_vec[i].get());
 
             for (std::size_t i = 0; i < n; i++)
             {
@@ -211,7 +221,7 @@ namespace MatlabPool
                 job.add_output(outBuf_vec[i], i);
             }
 
-            if(job.get_status() == JobEval::Status::Error)
+            if (job.get_status() == JobEval::Status::Error)
                 throw JobBase::ExecutionError(job.get_errBuf().get());
         }
 
@@ -298,6 +308,25 @@ namespace MatlabPool
             throw JobNotExists(jobID);
         }
 
+        void clear() override
+        {
+            std::unique_lock<std::mutex> lock_jobs(mutex_jobs);
+
+            // job queue
+            while(!jobs.empty() && jobs.back().get_status() == JobFeval::Status::Wait)
+                jobs.pop_back();
+
+            MATLABPOOL_ASSERT(jobs.size() < 2);
+            if (jobs.size() == 1)
+            {
+                MATLABPOOL_ASSERT(jobs.front().get_status() == JobFeval::Status::AssignToWorker);
+                jobs.front().cancel();
+            }
+
+            // future jobs
+            futureMap.clear();
+        }
+
     private:
         bool exists(JobID id) noexcept
         {
@@ -328,6 +357,7 @@ namespace MatlabPool
 
     private:
         bool stop;                      // mutex_jobs
+        bool sleep;                     // mutex_jobs
         std::vector<bool> worker_ready; // mutex_worker
         std::vector<EnginePtr> engine;  // mutex_worker
         JobID job_in_progress;          // mutex_jobs

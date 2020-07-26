@@ -9,6 +9,7 @@ classdef MatlabPool < handle
         cmd_eval         = uint8(5)
         cmd_cancel       = uint8(6)
         cmd_size         = uint8(7)
+        cmd_clear        = uint8(8)
         
         options = {'-nojvm', '-nosplash'}
     end
@@ -53,6 +54,10 @@ classdef MatlabPool < handle
         
         function val = size(~)
             val = MatlabPoolMEX(MatlabPool.cmd_size);
+        end
+
+        function clear(~)
+            MatlabPoolMEX(MatlabPool.cmd_clear);
         end
         
         function resize(obj,val)

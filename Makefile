@@ -15,7 +15,7 @@ MatlabRoot := C:\Program Files\MATLAB\R2019b
 
 
 ifeq ($(OS),Windows_NT)
-    RM := del
+    RM := powershell -command rm -r -Force
     MEXExtension := mexw64
     DLLExtension := dll
     MatlabLibraryPath := $(MatlabRoot)\extern\lib\win64\mingw64
@@ -26,11 +26,13 @@ else
         MEXExtension := mexa64
         DLLExtension := so
         MatlabLibraryPath := $(MatlabRoot)/extern/bin/glnxa64
+        MatlabEXE := $(MatlabRoot)/bin/matlab
     endif
     ifeq ($(UNAME_S),Darwin)
         MEXExtension := mexmaci64
         DLLExtension := dylib
         MatlabLibraryPath := $(MatlabRoot)/extern/bin/maci64
+        MatlabEXE := $(MatlabRoot)/bin/matlab
     endif
 endif
 
@@ -41,14 +43,11 @@ MEXDEFINES := -DMATLAB_MEX_FILE
 INCLUDE := -I"$(MatlabRoot)/extern/include" -I./src -I./include
 CXXFLAGS := -fexceptions -fno-omit-frame-pointer -std=c++17 -m64 -Wall
 
-DEFINES += -DMATLABPOOL_DISP_WORKER_OUTPUT
-DEFINES += -DMATLABPOOL_DISP_WORKER_ERROR
-DEFINES += -DMATLABPOOL_CHECK_EXIST_BEFORE_WAIT
 
 CXXFLAGS += -O2 -fwrapv -DNDEBUG
 
 # Linker Settings
-LDFLAGS := -Wl,--no-undefined
+LDFLAGS := -Wl,--no-undefined -fPIC
 LDTYPE := -shared -static -s
 LINKLIBS := -L"$(MatlabLibraryPath)" -llibmx -llibmex -llibmat -lm -llibmwlapack -llibmwblas -llibMatlabDataArray -llibMatlabEngine 
 
@@ -59,7 +58,6 @@ MEX := ./lib/MatlabPoolMEX.$(MEXExtension)
 
 DEFINES += -DMATLABPOOL_DISP_WORKER_OUTPUT
 DEFINES += -DMATLABPOOL_DISP_WORKER_ERROR
-DEFINES += -DMATLABPOOL_CHECK_EXIST_BEFORE_WAIT
 DEFINES += -DMATLABPOOL_DLL_PATH="\"$(DLL)\""
 
 build: $(DLL) $(Test) $(MEX)
@@ -81,6 +79,6 @@ test: build
 	$(MatlabEXE) -nosplash -nojvm -r "test"
 
 clean: 
-	$(RM) .\$(MEX)
-	$(RM) .\$(Test)
-	$(RM) .\$(DLL)
+	$(RM) $(MEX)
+	$(RM) $(Test)
+	$(RM) $(DLL)
