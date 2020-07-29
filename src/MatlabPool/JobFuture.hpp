@@ -73,7 +73,7 @@ namespace MatlabPool
             {
                 status = Status::Canceled;
             }
-            else if(future.valid())
+            else if(status != Status::Canceled && future.valid())
             {
                 future.cancel();
                 status = Status::Canceled;

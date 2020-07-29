@@ -23,7 +23,7 @@ namespace MatlabPool
         }
         return std::string(asciistr_ptr.get());
     }
-
+    // TODO virtual
     class EmptyStreamBuffer
     {
     protected:
@@ -75,7 +75,7 @@ namespace MatlabPool
             return str().empty(); // TODO !
         }
 
-        RealStreamBuffer &operator<<(std::size_t val)
+        RealStreamBuffer &operator<<(std::size_t val) // TODO
         {
             static std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
             *this << conv.from_bytes(std::to_string(val));

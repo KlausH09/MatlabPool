@@ -28,8 +28,7 @@ void run_tests()
     const unsigned int nof_worker = 2;
     std::vector<std::u16string> options = {u"-nojvm", u"-nosplash"};
 
-    auto pool_guard = std::unique_ptr<Pool>(PoolLibLoader::createPool(nof_worker, options));
-    Pool *pool = pool_guard.get();
+    auto pool = std::unique_ptr<Pool>(PoolLibLoader::createPool(nof_worker, options));
 
     test.set_postFun([&]() {
         using StatusType = std::underlying_type<JobFeval::Status>::type;
@@ -107,17 +106,7 @@ void run_tests()
         for (JobID &i : jobid)
             i = pool->submit(JobFeval(u"pause", 0, {factory.createScalar<double>(0.01)}));
 
-        pool_guard = std::unique_ptr<Pool>(PoolLibLoader::createPool(nof_worker, options));
-        pool = pool_guard.get();
-    });
-
-    test.run("cancel all jobs", Effort::Normal, [&]() {
-        using Float = float;
-        std::array<JobID, N> jobid;
-        for (std::size_t i = 0; i < N; i++)
-            jobid[i] = pool->submit(JobFeval(u"sqrt", 1, {factory.createScalar<Float>(Float(i))}));
-
-        pool->clear();
+        pool = std::unique_ptr<Pool>(PoolLibLoader::createPool(nof_worker, options));
     });
 
     test.run("empty pool size", Effort::Small, [&]() {
@@ -146,6 +135,8 @@ void run_tests()
 
         UnexpectCondition::Assert(job.get_status() == JobEval::Status::NoError, "error in at least one worker");
         UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
+
+// TODO
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
 #else
@@ -225,6 +216,15 @@ void run_tests()
             UnexpectCondition::Assert(N - i - 1 == status[0]["Status"].getNumberOfElements(), "unexpect size for \"Status\" field");
             UnexpectCondition::Assert(N - i - 1 == status[0]["WorkerID"].getNumberOfElements(), "unexpect size for \"WorkerID\" field");
         }
+    });
+
+    test.run("cancel all jobs", Effort::Normal, [&]() {
+        using Float = float;
+        std::array<JobID, N> jobid;
+        for (std::size_t i = 0; i < N; i++)
+            jobid[i] = pool->submit(JobFeval(u"sqrt", 1, {factory.createScalar<Float>(Float(i))}));
+
+        pool->clear();
     });
 
     test.run("cancel jobs", Effort::Normal, [&]() {

@@ -76,6 +76,7 @@ namespace MatlabPool
                         jobs.pop_front();
                         std::unique_lock<std::mutex> lock_worker(mutex_worker);
                         worker_ready[workerID] = true;
+                        cv_worker.notify_one();
                     }
                     else if (job.get_status() == JobFeval::Status::AssignToWorker)
                     {
@@ -286,21 +287,26 @@ namespace MatlabPool
             {
                 if (it_job->get_ID() == jobID)
                 {
-                    if (it_job->get_status() == JobFeval::Status::AssignToWorker)
+                    switch (it_job->get_status())
+                    {
+                    case JobFeval::Status::AssignToWorker:
                         it_job->cancel();
-                    else if (it_job->get_status() == JobFeval::Status::Wait)
+                        break;
+                    case JobFeval::Status::Wait:
                         jobs.erase(it_job);
-                    else
+                        break;
+                    default:
                         MATLABPOOL_ERROR("unexpect job status");
+                    }
                     return;
                 }
             }
 
             // finished jobs or in progress
-            decltype(futureMap)::iterator it_future;
-            if ((it_future = futureMap.find(jobID)) != futureMap.end())
+            auto it_future = futureMap.find(jobID);
+            if (it_future != futureMap.end())
             {
-                futureMap[jobID].cancel();
+                it_future->second.cancel();
                 futureMap.erase(it_future);
                 return;
             }
@@ -319,8 +325,16 @@ namespace MatlabPool
             MATLABPOOL_ASSERT(jobs.size() < 2);
             if (jobs.size() == 1)
             {
-                MATLABPOOL_ASSERT(jobs.front().get_status() == JobFeval::Status::AssignToWorker);
-                jobs.front().cancel();
+                switch (jobs.front().get_status())
+                {
+                case JobFeval::Status::Canceled:
+                    break;
+                case JobFeval::Status::AssignToWorker:
+                    jobs.front().cancel();
+                    break;
+                default:
+                    MATLABPOOL_ERROR("unexpect job status");
+                }
             }
 
             // future jobs
