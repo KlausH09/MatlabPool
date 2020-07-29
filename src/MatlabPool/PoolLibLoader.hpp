@@ -5,7 +5,7 @@
 #include "MatlabPool/LibLoader.hpp"
 
 #ifndef MATLABPOOL_DLL_PATH
-#define MATLABPOOL_DLL_PATH "./lib/MatlabPoolLib.dll"
+#define MATLABPOOL_DLL_PATH "./lib/libMatlabPool.dll"
 #endif
 
 namespace MatlabPool

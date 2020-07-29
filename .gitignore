@@ -1,4 +1,7 @@
 ######### C++ ###########
+# cmake
+build/
+
 # Prerequisites
 *.d
 
