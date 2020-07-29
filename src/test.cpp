@@ -136,7 +136,6 @@ void run_tests()
         UnexpectCondition::Assert(job.get_status() == JobEval::Status::NoError, "error in at least one worker");
         UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
 
-// TODO
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
 #else

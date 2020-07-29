@@ -1,6 +1,8 @@
 #ifndef MATLABPOOL_STREAMBUF_HPP
 #define MATLABPOOL_STREAMBUF_HPP
 
+#include "MatlabPool/Assert.hpp"
+
 #include <memory>
 #include <sstream>
 #include <string>
@@ -23,11 +25,24 @@ namespace MatlabPool
         }
         return std::string(asciistr_ptr.get());
     }
-    // TODO virtual
+
+    class BasicStringBuf : public StreamBuf
+    {
+    public:
+        std::size_t size() const noexcept
+        {
+            MATLABPOOL_ASSERT(pptr() >= pbase());
+            return pptr() - pbase();
+        }
+        bool empty() const noexcept
+        {
+            return pptr() == pbase();
+        }
+    };
+
     class EmptyStreamBuffer
     {
     protected:
-
     public:
         std::shared_ptr<StreamBuf> get() const noexcept
         {
@@ -58,11 +73,11 @@ namespace MatlabPool
     class RealStreamBuffer : public EmptyStreamBuffer
     {
     public:
-        RealStreamBuffer() : buffer(std::make_shared<StreamBuf>()) {}
+        RealStreamBuffer() : buffer(std::make_shared<BasicStringBuf>()) {}
 
         std::shared_ptr<StreamBuf> get() const noexcept
         {
-            return buffer;
+            return std::static_pointer_cast<StreamBuf>(buffer);
         }
 
         std::u16string str() const
@@ -72,7 +87,7 @@ namespace MatlabPool
 
         bool empty() const
         {
-            return str().empty(); // TODO !
+            return buffer->empty();
         }
 
         RealStreamBuffer &operator<<(std::size_t val) // TODO
@@ -95,7 +110,7 @@ namespace MatlabPool
         }
 
     private:
-        std::shared_ptr<StreamBuf> buffer;
+        std::shared_ptr<BasicStringBuf> buffer;
     };
 
 } // namespace MatlabPool

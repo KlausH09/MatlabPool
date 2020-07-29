@@ -12,8 +12,6 @@
 
 namespace MatlabPool
 {
-
-// TODO was wenn dll und mex unterschiedlich kompiliert werden 'MATLABPOOL_DISP_WORKER_OUTPUT'
 #ifdef MATLABPOOL_DISP_WORKER_OUTPUT
     constexpr const bool disp_output_buffer = true;
     using OutputBuf = RealStreamBuffer;
