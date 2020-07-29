@@ -26,20 +26,6 @@ namespace MatlabPool
         return std::string(asciistr_ptr.get());
     }
 
-    class BasicStringBuf : public StreamBuf
-    {
-    public:
-        std::size_t size() const noexcept
-        {
-            MATLABPOOL_ASSERT(pptr() >= pbase());
-            return pptr() - pbase();
-        }
-        bool empty() const noexcept
-        {
-            return pptr() == pbase();
-        }
-    };
-
     class EmptyStreamBuffer
     {
     protected:
@@ -72,6 +58,19 @@ namespace MatlabPool
 
     class RealStreamBuffer : public EmptyStreamBuffer
     {
+        class BasicStringBuf : public StreamBuf
+        {
+        public:
+            std::size_t size() const noexcept
+            {
+                MATLABPOOL_ASSERT(pptr() >= pbase());
+                return pptr() - pbase();
+            }
+            bool empty() const noexcept
+            {
+                return pptr() == pbase();
+            }
+        };
     public:
         RealStreamBuffer() : buffer(std::make_shared<BasicStringBuf>()) {}
 
@@ -90,10 +89,12 @@ namespace MatlabPool
             return buffer->empty();
         }
 
-        RealStreamBuffer &operator<<(std::size_t val) // TODO
+        template <typename T>
+        RealStreamBuffer &operator<<(const T &val)
         {
             static std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
-            *this << conv.from_bytes(std::to_string(val));
+            auto tmp = std::u16string{conv.from_bytes(std::to_string(val))};
+            buffer->sputn(&tmp[0], tmp.size());
             return *this;
         }
 
@@ -102,11 +103,26 @@ namespace MatlabPool
             buffer->sputn(&val[0], val.size());
             return *this;
         }
+        RealStreamBuffer &operator<<(const char16_t *val)
+        {
+            buffer->sputn(val, strlen16(val));
+            return *this;
+        }
 
         friend void swap(RealStreamBuffer &lhs, RealStreamBuffer &rhs)
         {
             using std::swap;
             swap(rhs.buffer, lhs.buffer);
+        }
+
+    private:
+        std::size_t strlen16(const char16_t *strarg)
+        {
+            MATLABPOOL_ASSERT(strarg);
+            const char16_t *str = strarg;
+            for (; *str; ++str)
+                ;
+            return std::size_t(str - strarg);
         }
 
     private:
