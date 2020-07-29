@@ -50,15 +50,6 @@ public:
     };
 
 public:
-    MexFunction()
-    {
-        mexLock();
-    }
-    ~MexFunction()
-    {
-        mexUnlock();
-    }
-
     void operator()(ArgumentList outputs, ArgumentList inputs);
 
     void resize(ArgumentList &outputs, ArgumentList &inputs);

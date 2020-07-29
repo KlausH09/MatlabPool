@@ -14,55 +14,64 @@ classdef MatlabPool < handle
         options = {'-nojvm', '-nosplash'}
     end
     
-    properties(SetAccess = private)
-        n(1,1)uint32
-    end
-    
     methods
         function obj = MatlabPool(n)
             addpath([fileparts(mfilename('fullpath')) '/lib'])
             resize(obj,n)
         end
+    end
         
-        function delete(~)
-            % clear MatlabPoolMEX
+    methods(Static)
+        
+        function init(val)
+            addpath([fileparts(mfilename('fullpath')) '/lib'])
+            MatlabPool.resize(val);
         end
         
-        function jobid = submit(~,fun,nof_args,varargin)
+        function shutdown()
+            clear('MatlabPoolMEX')
+        end
+        
+        function jobid = submit(fun,nof_args,varargin)
             jobid = MatlabPoolMEX(MatlabPool.cmd_submit,fun,uint64(nof_args),varargin{:});
         end
         
-        function result = wait(~,jobid)
+        function result = wait(jobid)
             result = MatlabPoolMEX(MatlabPool.cmd_wait,uint64(jobid));
         end
         
-        function status = statusJobs(~)
+        function status = statusJobs()
             status = MatlabPoolMEX(MatlabPool.cmd_statusJobs);
         end
         
-        function status = statusWorker(~)
+        function status = statusWorker()
             status = MatlabPoolMEX(MatlabPool.cmd_statusWorker);
         end
         
-        function eval(~,fun)
+        function eval(fun)
             MatlabPoolMEX(MatlabPool.cmd_eval,fun);
         end
         
-        function cancel(~,jobid)
+        function cancel(jobid)
             MatlabPoolMEX(MatlabPool.cmd_cancel,uint64(jobid));
         end
         
-        function val = size(~)
+        function val = size()
             val = MatlabPoolMEX(MatlabPool.cmd_size);
         end
 
-        function clear(~)
+        function clear()
             MatlabPoolMEX(MatlabPool.cmd_clear);
         end
         
-        function resize(obj,val)
-            obj.n = val;
-            MatlabPoolMEX(MatlabPool.cmd_resize,obj.n,MatlabPool.options{:})
+        function resize(val)
+            val = uint32(val);
+            if val == uint32(0)
+                MatlabPool.shutdown();
+            else
+                MatlabPoolMEX(MatlabPool.cmd_resize,val,MatlabPool.options{:})
+            end    
+        MatlabPoolMEX(MatlabPool.cmd_resize,val,MatlabPool.options{:})
         end
         
     end
