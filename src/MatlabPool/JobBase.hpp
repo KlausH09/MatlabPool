@@ -2,13 +2,10 @@
 #define MATLABPOOL_JOBBASE_HPP
 
 #include <string>
-#include <vector>
-#include <ostream>
 
 #include "MatlabPool/StreamBuf.hpp"
 #include "MatlabPool/Exception.hpp"
 
-#include "MatlabDataArray.hpp"
 
 namespace MatlabPool
 {
@@ -40,83 +37,28 @@ namespace MatlabPool
         class ExecutionError : public JobBaseException
         {
         public:
-            ExecutionError(std::shared_ptr<StreamBuf> buffer)
-            {
-                std::ostringstream os;
-                os << "an error has occurred during execution";
-                if(buffer)
-                {
-                    os << '\n' << convertUTF16StringToASCIIString(buffer->str());
-                }
-                msg = os.str();
-            }
-            ExecutionError(JobID id, std::shared_ptr<StreamBuf> buffer)
-            {
-                std::ostringstream os;
-                os << "an error has occurred during job execution (id: " << id << ")";
-                if(buffer)
-                {
-                    os << '\n' << convertUTF16StringToASCIIString(buffer->str());
-                }
-                msg = os.str();
-            }
-            const char *what() const noexcept override
-            {
-                return msg.c_str();
-            }
-            const char *identifier() const noexcept override
-            {
-                return "JobExecutionError";
-            }
+            ExecutionError(std::shared_ptr<StreamBuf> buffer);
+            ExecutionError(JobID id, std::shared_ptr<StreamBuf> buffer);
+            const char *what() const noexcept override;
+            const char *identifier() const noexcept override;
         private:
             std::string msg;
         };
 
     protected:
-        JobBase() noexcept : id(0){};
-        JobBase(std::u16string cmd) : id(id_count++),
-                                      cmd(std::move(cmd))
-        {
-        }
+        JobBase() noexcept;
+        JobBase(std::u16string cmd);
 
     public:
-        JobBase(JobBase &&other) noexcept : JobBase()
-        {
-            using std::swap;
-            swap(*this, other);
-        }
-        JobBase &operator=(JobBase &&other) noexcept
-        {
-            using std::swap;
-            swap(*this, other);
-            return *this;
-        }
-        friend void swap(JobBase &j1, JobBase &j2) noexcept
-        {
-            using std::swap;
-            swap(j1.id, j2.id);
-            swap(j1.cmd, j2.cmd);
+        JobBase(JobBase &&other) noexcept;
+        JobBase &operator=(JobBase &&other) noexcept;
 
-            swap(j1.outputBuf, j2.outputBuf);
-            swap(j1.errorBuf, j2.errorBuf);
-        }
+        friend void swap(JobBase &j1, JobBase &j2) noexcept;
 
-        JobID get_ID() const noexcept
-        {
-            return id;
-        }
-        const std::u16string &get_cmd() const noexcept
-        {
-            return cmd;
-        }
-        OutputBuf &get_outBuf() noexcept
-        {
-            return outputBuf;
-        }
-        ErrorBuf &get_errBuf() noexcept
-        {
-            return errorBuf;
-        }
+        JobID get_ID() const noexcept;
+        const std::u16string &get_cmd() const noexcept;
+        OutputBuf &get_outBuf() noexcept;
+        ErrorBuf &get_errBuf() noexcept;
 
     protected:
         JobID id;

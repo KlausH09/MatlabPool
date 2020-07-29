@@ -32,22 +32,24 @@ add_definitions(-DMATLABPOOL_DISP_WORKER_OUTPUT
                 -DMATLABPOOL_DISP_WORKER_ERROR
                 -DMATLABPOOL_DLL_PATH="${MatlabPool_lib_path}")
 
-# TODO static libary fuer ${PROJECT_SOURCE_DIR}/src/MatlabPool
+# static library for source files in ${PROJECT_SOURCE_DIR}/src/MatlabPool
+aux_source_directory(${PROJECT_SOURCE_DIR}/src/MatlabPool source_MatlabPoolStaticLib)
+add_library(MatlabPoolStaticLib ${source_MatlabPoolStaticLib})
+target_link_libraries(MatlabPoolStaticLib ${Matlab_LIBRARIES})
 
 # MatlabPool Library
-aux_source_directory(${PROJECT_SOURCE_DIR}/src/MatlabPoolLib source)
-add_library(MatlabPool MODULE ${source})
-target_link_libraries(MatlabPool ${Matlab_LIBRARIES})
-
+aux_source_directory(${PROJECT_SOURCE_DIR}/src/MatlabPoolLib source_MatlabPool)
+add_library(MatlabPool MODULE ${source_MatlabPool})
+target_link_libraries(MatlabPool ${Matlab_LIBRARIES} MatlabPoolStaticLib)
 
 # MatlabPool MEX
-matlab_add_mex(NAME MatlabPoolMEX SRC ${PROJECT_SOURCE_DIR}/src/MatlabPoolMEX/MatlabPoolMEX.cpp)
-
+matlab_add_mex(NAME MatlabPoolMEX MODULE SRC ${PROJECT_SOURCE_DIR}/src/MatlabPoolMEX/MatlabPoolMEX.cpp
+                LINK_TO ${Matlab_LIBRARIES} MatlabPoolStaticLib)
 
 # C++ tests
 set(target matlabpool_test)
 add_executable(${target} ${PROJECT_SOURCE_DIR}/src/${target}.cpp)
-target_link_libraries(${target} ${Matlab_LIBRARIES})
+target_link_libraries(${target} ${Matlab_LIBRARIES} MatlabPoolStaticLib)
 add_custom_target(cpp_test ${PROJECT_BINARY_DIR}/${target}${CMAKE_EXECUTABLE_SUFFIX})
 
 # Matlab tests

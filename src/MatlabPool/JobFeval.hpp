@@ -3,12 +3,8 @@
 
 #include <string>
 #include <vector>
-#include <functional>
-#include <exception>
-#include <ostream>
 
 #include "MatlabPool/JobBase.hpp"
-#include "MatlabPool/Assert.hpp"
 
 #include "MatlabDataArray.hpp"
 
@@ -33,91 +29,29 @@ namespace MatlabPool
         };
 
     public:
-        JobFeval() noexcept : JobBase(), status(Status::Empty), workerID(-1){};
-        JobFeval(std::u16string cmd, std::size_t nlhs, std::vector<matlab::data::Array> &&args) : JobBase(cmd),
-                                                                                             status(Status::Wait),
-                                                                                             nlhs(nlhs),
-                                                                                             args(std::move(args)),
-                                                                                             workerID(-1)
+        JobFeval() noexcept;
+        JobFeval(std::u16string cmd, std::size_t nlhs, std::vector<matlab::data::Array> &&args);
+        JobFeval(JobFeval &&other) noexcept;
 
-        {
-        }
+        JobFeval &operator=(JobFeval &&other) noexcept;
 
-        JobFeval(JobFeval &&other) noexcept : JobFeval()
-        {
-            using std::swap;
-            swap(*this, other);
-        }
+        friend void swap(JobFeval &j1, JobFeval &j2) noexcept;
 
-        JobFeval &operator=(JobFeval &&other) noexcept
-        {
-            using std::swap;
-            swap(*this, other);
-            return *this;
-        }
+        void set_AssignToWorker_status();
 
-        friend void swap(JobFeval &j1, JobFeval &j2) noexcept
-        {
-            using std::swap;
-            swap(static_cast<JobBase &>(j1), static_cast<JobBase &>(j2));
-            swap(j1.status,j2.status);
-            swap(j1.nlhs, j2.nlhs);
-            swap(j1.args, j2.args);
-            swap(j1.result, j2.result);
-            swap(j1.workerID, j2.workerID);
-        }
-        void set_AssignToWorker_status()
-        {
-            MATLABPOOL_ASSERT(status == Status::Wait);
-            status = Status::AssignToWorker;
-        }
+        std::size_t get_nlhs() const noexcept;
 
-        std::size_t get_nlhs() const noexcept
-        {
-            return nlhs;
-        }
-        std::vector<matlab::data::Array> &get_args() noexcept
-        {
-            return args;
-        }
+        std::vector<matlab::data::Array> &get_args() noexcept;
 
-        void set_workerID(int val) noexcept
-        {
-            if (val >= 0)
-            {
-                MATLABPOOL_ASSERT(status == Status::AssignToWorker);
-                status = Status::InProgress;
-            }
-            workerID = val;
-        }
+        void set_workerID(int val) noexcept;
 
-        int get_workerID() const noexcept
-        {
-            return workerID;
-        }
+        int get_workerID() const noexcept;
 
-        Status get_status() const noexcept
-        {
-            return status;
-        }
+        Status get_status() const noexcept;
 
-        const std::vector<matlab::data::Array> &peek_result() const
-        {
-            if (status == Status::Error)
-                throw ExecutionError(id, errorBuf.get());
-            MATLABPOOL_ASSERT(status == Status::Done);
+        const std::vector<matlab::data::Array> &peek_result() const;
 
-            return result;
-        }
-        std::vector<matlab::data::Array> pop_result()
-        {
-            if (status == Status::Error)
-                throw ExecutionError(id, errorBuf.get());
-            MATLABPOOL_ASSERT(status == Status::Done);
-
-            status = Status::DoneEmpty;
-            return std::move(result);
-        }
+        std::vector<matlab::data::Array> pop_result();
 
     protected:
         Status status;

@@ -13,13 +13,6 @@ classdef MatlabPool < handle
         
         options = {'-nojvm', '-nosplash'}
     end
-    
-    methods
-        function obj = MatlabPool(n)
-            addpath([fileparts(mfilename('fullpath')) '/lib'])
-            resize(obj,n)
-        end
-    end
         
     methods(Static)
         

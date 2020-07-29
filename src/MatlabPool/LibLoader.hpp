@@ -4,7 +4,6 @@
 #include "MatlabPool/Exception.hpp"
 
 #include <string>
-#include <sstream>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -55,17 +54,8 @@ namespace MatlabPool
         };
 
     public:
-        LibLoader(const char *path)
-        {
-            handle = MATLABPOOL_LOADLIBRARY(path);
-            if (!handle)
-                throw CannotLoadDLL(path);
-        }
-        ~LibLoader()
-        {
-            if (handle)
-                MATLABPOOL_FREELIBRARY(handle);
-        }
+        LibLoader(const char *path);
+        ~LibLoader();
 
         template <typename FUN>
         FUN* load_fun(const char *name)
@@ -79,38 +69,6 @@ namespace MatlabPool
     private:
         MATLABPOOL_HANDLE handle;
     };
-
-    LibLoader::CannotLoadDLL::CannotLoadDLL(const char *path)
-    {
-        std::ostringstream os;
-        os << "Cannot load Library \"" << path << "\"\n"
-           << "Error: " << MATLABPOOL_GET_ERROR_MSG << '\n';
-        msg = os.str();
-    }
-    const char *LibLoader::CannotLoadDLL::what() const noexcept
-    {
-        return msg.c_str();
-    }
-    const char *LibLoader::CannotLoadDLL::identifier() const noexcept
-    {
-        return "CannotLoadDLL";
-    }
-
-    LibLoader::CannotLoadDLLFunction::CannotLoadDLLFunction(const char *name)
-    {
-        std::ostringstream os;
-        os << "Cannot load Library Function \"" << name << "\"\n"
-           << "Error: " << MATLABPOOL_GET_ERROR_MSG << '\n';
-        msg = os.str();
-    }
-    const char *LibLoader::CannotLoadDLLFunction::what() const noexcept
-    {
-        return msg.c_str();
-    }
-    const char *LibLoader::CannotLoadDLLFunction::identifier() const noexcept
-    {
-        return "CannotLoadDLLFunction";
-    }
 
 } // namespace MatlabPool
 

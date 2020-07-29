@@ -15,37 +15,22 @@ namespace MatlabPool
     public:
         class PoolException : public Exception
         {};
+
         class JobNotExists : public PoolException
         {
         public:
-            JobNotExists(JobID id)
-            {
-                std::ostringstream os;
-                os << "job with id=" << id << " does not exists";
-                msg = os.str();
-            }
-            const char *what() const noexcept override
-            {
-                return msg.c_str();
-            }
-            const char *identifier() const noexcept override
-            {
-                return "JobNotExists";
-            }
+            JobNotExists(JobID id);
+            const char *what() const noexcept override;
+            const char *identifier() const noexcept override;
         private:
             std::string msg;
         };
+        
         class EmptyPool : public PoolException
         {
         public:
-            const char *what() const noexcept override
-            {
-                return "pool size is equal zero";
-            }
-            const char *identifier() const noexcept override
-            {
-                return "EmptyPool";
-            }
+            const char *what() const noexcept override;
+            const char *identifier() const noexcept override;
         };
 
         virtual ~Pool(){}

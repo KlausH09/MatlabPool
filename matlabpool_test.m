@@ -7,11 +7,6 @@ N = 50; % count of jobs in a single test
 MatlabPool.init(2);
 MatlabPool.clear(); % cancel all jobs
 
-count_eval.Small = 100;
-count_eval.Normal = 30;
-count_eval.Large = 5;
-count_eval.Huge = 1;
-
 i = 1;
 while(true)
     name = sprintf('test_%d',i);
