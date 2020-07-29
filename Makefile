@@ -69,10 +69,10 @@ build: $(DLL) $(Test) $(MEX)
 $(Test): ./src/$(basename $(Test)).cpp
 	$(CXX) -o $@ $(DEFINES) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
-$(DLL): ./src/$(basename $(notdir $(DLL))).cpp
+$(DLL): ./src/MatlabPoolLib/$(basename $(notdir $(DLL))).cpp
 	$(CXX) -o $@ $(DEFINES) -DWIN_EXPORT $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
-$(MEX): ./src/$(basename $(notdir $(MEX))).cpp
+$(MEX): ./src/MatlabPoolMEX/$(basename $(notdir $(MEX))).cpp
 	$(CXX) -o $@ $(DEFINES) $(LDFLAGS) $(LDTYPE) $(INCLUDE) $(CXXFLAGS) $< $(LINKLIBS)
 
 test: build

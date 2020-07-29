@@ -4,7 +4,7 @@
 #include "MatlabDataArray.hpp"
 #include "MatlabEngine.hpp"
 
-#include "MatlabPool/JobFuture.hpp"
+#include "MatlabPoolLib/JobFuture.hpp"
 #include "MatlabPool/StreamBuf.hpp"
 
 namespace MatlabPool

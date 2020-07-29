@@ -16,8 +16,8 @@
 
 #include "MatlabPool/Pool.hpp"
 #include "MatlabPool/JobFeval.hpp"
-#include "MatlabPool/JobFuture.hpp"
-#include "MatlabPool/EngineHack.hpp"
+#include "MatlabPoolLib/JobFuture.hpp"
+#include "MatlabPoolLib/EngineHack.hpp"
 #include "MatlabPool/Assert.hpp"
 
 namespace MatlabPool
