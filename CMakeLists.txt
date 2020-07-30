@@ -23,6 +23,7 @@ endfunction()
 # flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fwrapv -DNDEBUG")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 # includes
 include_directories(${Matlab_INCLUDE_DIRS}

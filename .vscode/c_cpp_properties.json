@@ -1,31 +1,35 @@
 {
     "configurations": [
         {
+            "name": "Linux",
+            "defines": [
+                "MATLABPOOL_DISP_WORKER_OUTPUT",
+                "MATLABPOOL_DISP_WORKER_ERROR"
+            ],
+            "compilerPath": "/usr/bin/g++", 
+            "intelliSenseMode": "gcc-x64",
+            "includePath": [
+                "${default}",
+                "/usr/local/MATLAB/R2019b/extern/include",
+                "./src",
+                "./include"
+            ],
+            "cppStandard": "gnu++17"
+        },
+        {
             "name": "Win32",
             "defines": [
-                "_DEBUG",
                 "MATLABPOOL_DISP_WORKER_OUTPUT",
                 "MATLABPOOL_DISP_WORKER_ERROR"
             ],
             "compilerPath": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2019b\\3P.instrset\\mingw_w64.instrset\\bin\\g++.exe", 
             "intelliSenseMode": "gcc-x64",
-            "browse": {
-                "path": [
-                    "${workspaceFolder}",
-                    "C:\\ProgramData\\MATLAB\\SupportPackages\\R2019b\\3P.instrset\\mingw_w64.instrset\\x86_64-w64-mingw32\\include",
-                    "C:\\Program Files\\MATLAB\\R2019b\\extern\\include"
-                ],
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            },
             "includePath": [
                 "${default}",
                 "C:\\Program Files\\MATLAB\\R2019b\\extern\\include",
                 "./src",
-                "./include",
-                "C:\\ProgramData\\MATLAB\\SupportPackages\\R2019b\\3P.instrset\\mingw_w64.instrset\\x86_64-w64-mingw32\\include"
+                "./include"
             ],
-            "cStandard": "c11",
             "cppStandard": "gnu++17"
         }
     ],
