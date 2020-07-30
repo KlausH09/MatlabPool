@@ -12,6 +12,9 @@ find_package(Matlab ${MatlabVersion} REQUIRED ENG_LIBRARY MX_LIBRARY MAT_LIBRARY
 
 # library paths
 link_directories(${Matlab_LIBRARIES})
+if(UNIX)
+    link_libraries(-ldl)
+endif(UNIX)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib_static)
 
