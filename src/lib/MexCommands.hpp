@@ -1,7 +1,7 @@
 #ifndef MATLABPOOL_MEXCOMMANDS_HPP
 #define MATLABPOOL_MEXCOMMANDS_HPP
 
-#include "MatlabPoolMEX.hpp"
+#include "MexMatlabPool.hpp"
 
 namespace MatlabPool::MexCommands
 {

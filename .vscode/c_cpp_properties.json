@@ -21,7 +21,7 @@
                 "${default}",
                 "/usr/local/MATLAB/R2019b/extern/include",
                 "./src",
-                "./src/MatlabPool"
+                "./include"
             ],
             "cStandard": "c11",
             "cppStandard": "gnu++17"

@@ -1,4 +1,4 @@
-#include "MatlabPoolMEX.hpp"
+#include "MexMatlabPool.hpp"
 #include "MexCommands.hpp"
 
 void MexFunction::operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)

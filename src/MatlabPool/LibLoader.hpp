@@ -28,7 +28,7 @@ namespace MatlabPool
     class LibLoader
     {
         using Constructor = Pool *(std::size_t, const std::vector<std::u16string> &);
-        static constexpr const char lib_path[] = "MatlabPoolLib.so"; // TODO windows/linux und lib...
+        static constexpr const char lib_path[] = "/home/oem/repos/MatlabPool/libMatlabPool.so"; // TODO windows/linux und lib...
         static constexpr const char lib_function[] = "construct";
 
         LibLoader(const LibLoader &) = delete;

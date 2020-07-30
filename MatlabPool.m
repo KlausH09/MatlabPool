@@ -23,40 +23,40 @@ classdef MatlabPool < handle
         end
         
         function delete(~)
-            % clear MatlabPoolMEX
+            % clear MexMatlabPool
         end
         
         function jobid = submit(~,fun,nof_args,varargin)
-            jobid = MatlabPoolMEX(MatlabPool.cmd_submit,fun,uint64(nof_args),varargin{:});
+            jobid = MexMatlabPool(MatlabPool.cmd_submit,fun,uint64(nof_args),varargin{:});
         end
         
         function result = wait(~,jobid)
-            result = MatlabPoolMEX(MatlabPool.cmd_wait,uint64(jobid));
+            result = MexMatlabPool(MatlabPool.cmd_wait,uint64(jobid));
         end
         
         function status = statusJobs(~)
-            status = MatlabPoolMEX(MatlabPool.cmd_statusJobs);
+            status = MexMatlabPool(MatlabPool.cmd_statusJobs);
         end
         
         function status = statusWorker(~)
-            status = MatlabPoolMEX(MatlabPool.cmd_statusWorker);
+            status = MexMatlabPool(MatlabPool.cmd_statusWorker);
         end
         
         function eval(~,fun)
-            MatlabPoolMEX(MatlabPool.cmd_eval,fun);
+            MexMatlabPool(MatlabPool.cmd_eval,fun);
         end
         
         function cancel(~,jobid)
-            MatlabPoolMEX(MatlabPool.cmd_cancel,uint64(jobid));
+            MexMatlabPool(MatlabPool.cmd_cancel,uint64(jobid));
         end
         
         function val = size(~)
-            val = MatlabPoolMEX(MatlabPool.cmd_size);
+            val = MexMatlabPool(MatlabPool.cmd_size);
         end
         
         function resize(obj,val)
             obj.n = val;
-            MatlabPoolMEX(MatlabPool.cmd_resize,obj.n,MatlabPool.options{:})
+            MexMatlabPool(MatlabPool.cmd_resize,obj.n,MatlabPool.options{:})
         end
         
     end
