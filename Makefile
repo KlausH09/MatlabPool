@@ -11,10 +11,12 @@ endif
 all: build
 	cd build && ${CMAKE} .. 
 	cd build && ${MAKE}
-	cd build && ${MAKE} test
 
 build: 
 	mkdir build
+
+test:
+	cd build && ${MAKE} test
 
 clean:
 	${RM_BUILD}

@@ -7,7 +7,8 @@ project(MatlabPool)
 
 enable_testing()
 
-find_package(Matlab REQUIRED ENG_LIBRARY MX_LIBRARY MAT_LIBRARY MAIN_PROGRAM) # TODO version
+set(MatlabVersion 9.4) # Matlab R2018a or later
+find_package(Matlab ${MatlabVersion} REQUIRED ENG_LIBRARY MX_LIBRARY MAT_LIBRARY MAIN_PROGRAM)
 
 # library paths
 link_directories(${Matlab_LIBRARIES})
@@ -21,7 +22,7 @@ endfunction()
 
 # flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fwrapv -DNDEBUG") # TODO
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fwrapv -DNDEBUG")
 
 # includes
 include_directories(${Matlab_INCLUDE_DIRS}
