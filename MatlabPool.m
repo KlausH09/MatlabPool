@@ -17,7 +17,7 @@ classdef MatlabPool < handle
     methods(Static)
         
         function init(val)
-            addpath([fileparts(mfilename('fullpath')) '/lib'])
+            % addpath([fileparts(mfilename('fullpath')) '/lib'])
             MatlabPool.resize(val);
         end
         

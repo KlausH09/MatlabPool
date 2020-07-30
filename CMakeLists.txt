@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED  True)
 
 project(MatlabPool)
 
+enable_testing()
+
 find_package(Matlab REQUIRED ENG_LIBRARY MX_LIBRARY MAT_LIBRARY MAIN_PROGRAM) # TODO version
 
 # library paths
@@ -42,9 +44,11 @@ aux_source_directory(${PROJECT_SOURCE_DIR}/src/MatlabPoolLib source_MatlabPool)
 add_library(MatlabPool MODULE ${source_MatlabPool})
 target_link_libraries(MatlabPool ${Matlab_LIBRARIES} MatlabPoolStaticLib)
 
+
 # MatlabPool MEX
 matlab_add_mex(NAME MatlabPoolMEX MODULE SRC ${PROJECT_SOURCE_DIR}/src/MatlabPoolMEX/MatlabPoolMEX.cpp
                 LINK_TO ${Matlab_LIBRARIES} MatlabPoolStaticLib)
+target_compile_options(MatlabPoolMEX PUBLIC -Wl,--exclude-libs,ALL)
 
 # C++ tests
 set(target matlabpool_test)
@@ -53,6 +57,8 @@ target_link_libraries(${target} ${Matlab_LIBRARIES} MatlabPoolStaticLib)
 add_custom_target(cpp_test ${PROJECT_BINARY_DIR}/${target}${CMAKE_EXECUTABLE_SUFFIX})
 
 # Matlab tests
-file(COPY ${PROJECT_SOURCE_DIR}/matlabpool_test.m DESTINATION ${PROJECT_BINARY_DIR})
-file(COPY ${PROJECT_SOURCE_DIR}/MatlabPool.m DESTINATION ${PROJECT_BINARY_DIR})
-add_custom_target(matlab_test ${Matlab_MAIN_PROGRAM} -nosplash -nojvm -r "matlabpool_test")
+matlab_add_unit_test(
+    NAME matlab_test
+    UNITTEST_FILE MatlabPoolTest.m
+    CUSTOM_TEST_COMMAND "run(MatlabPoolTest);exit(max([ans(1,:).Failed]))"
+    ADDITIONAL_PATH ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR}/lib)
