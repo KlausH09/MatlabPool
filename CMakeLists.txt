@@ -54,7 +54,7 @@ target_compile_options(MatlabPoolMEX PUBLIC -Wl,--exclude-libs,ALL)
 set(target matlabpool_test)
 add_executable(${target} ${PROJECT_SOURCE_DIR}/src/${target}.cpp)
 target_link_libraries(${target} ${Matlab_LIBRARIES} MatlabPoolStaticLib)
-add_custom_target(cpp_test ${PROJECT_BINARY_DIR}/${target}${CMAKE_EXECUTABLE_SUFFIX})
+add_test(NAME cpp_test COMMAND ${PROJECT_BINARY_DIR}/${target}${CMAKE_EXECUTABLE_SUFFIX})
 
 # Matlab tests
 matlab_add_unit_test(
