@@ -91,7 +91,7 @@ namespace MatlabPool
         auto st = factory.createStructArray({1}, {"function", "outputBuf", "errorBuf"});
         st[0]["function"] = factory.createCharArray(cmd);
         st[0]["outputBuf"] = factory.createCharArray(outputBuf.str());
-        st[0]["errorBuf"] = factory.createCharArray(outputBuf.str());
+        st[0]["errorBuf"] = factory.createCharArray(errorBuf.str());
         return st;
     }
 

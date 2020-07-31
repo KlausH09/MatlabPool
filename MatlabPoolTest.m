@@ -22,28 +22,35 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
     
     methods (Test)
         function test_feval1(~)
+            MatlabPool.clear();
             for i = MatlabPoolTest.N:-1:1
                 id(i) = MatlabPool.submit('sqrt',1,i);
             end
             for i = MatlabPoolTest.N:-1:1
                 result = MatlabPool.wait(id(i));
-                assert(abs(result{1}-sqrt(i)) < eps)
+                assert(isempty(result.outputBuf))
+                assert(isempty(result.errorBuf))
+                assert(abs(result.result-sqrt(i)) < eps)
             end
             MatlabPoolTest.check_is_empty()
         end
 
         function test_feval2(~)
+            MatlabPool.clear();
             for i = MatlabPoolTest.N:-1:1
                 id(i) = MatlabPool.submit('sqrt',1,single(i));
             end
             for i = MatlabPoolTest.N:-1:1
                 result = MatlabPool.wait(id(i));
-                assert(abs(result{1}-sqrt(single(i))) < eps)
+                assert(isempty(result.outputBuf))
+                assert(isempty(result.errorBuf))
+                assert(abs(result.result-sqrt(single(i))) < eps)
             end
             MatlabPoolTest.check_is_empty()
         end
 
         function test_increas_decrease_poolSize(~)
+            MatlabPool.clear();
             for i = MatlabPoolTest.N:-1:1
                 id(i) = MatlabPool.submit('sqrt',1,i);
             end
@@ -52,7 +59,9 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
             assert(n + 2 == MatlabPool.size())
             for i = MatlabPoolTest.N:-1:1
                 result = MatlabPool.wait(id(i));
-                assert(abs(result{1}-sqrt(i)) < eps)
+                assert(isempty(result.outputBuf))
+                assert(isempty(result.errorBuf))
+                assert(abs(result.result-sqrt(i)) < eps)
             end
 
             for i = MatlabPoolTest.N:-1:1
@@ -62,12 +71,15 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
             assert(n == MatlabPool.size())
             for i = MatlabPoolTest.N:-1:1
                 result = MatlabPool.wait(id(i));
-                assert(abs(result{1}-sqrt(i)) < eps)
+                assert(isempty(result.outputBuf))
+                assert(isempty(result.errorBuf))
+                assert(abs(result.result-sqrt(i)) < eps)
             end
             MatlabPoolTest.check_is_empty()
         end
 
         function test_clearPool(~)
+            MatlabPool.clear();
             for i = MatlabPoolTest.N:-1:1
                 MatlabPool.submit('sqrt',1,i);
             end
@@ -76,6 +88,7 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
         end
 
         function test_waitForUndefJob(~)
+            MatlabPool.clear();
             try
                 MatlabPool.wait(uint64(0));
                 MatlabPoolTest.check_is_empty()
@@ -88,6 +101,7 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
         end
 
         function test_wait_2times_same_job(~)
+            MatlabPool.clear();
             id = MatlabPool.submit('sqrt',1,47);
             MatlabPool.wait(id);
             try
@@ -102,23 +116,32 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
         end
 
         function test_eval(~)
-            MatlabPool.eval('pwd');
+            MatlabPool.clear();
+            result = MatlabPool.eval('pwd');
+            assert(~isempty(result.outputBuf))
+            assert(isempty(result.errorBuf))
             MatlabPoolTest.check_is_empty()
         end
 
         function test_jobs_and_eval(~)
+            MatlabPool.clear();
             for i = MatlabPoolTest.N:-1:1
                 id(i) = MatlabPool.submit('sqrt',1,i);
             end
-            MatlabPool.eval('pwd');
+            result = MatlabPool.eval('pwd');
+            assert(~isempty(result.outputBuf))
+            assert(isempty(result.errorBuf))
             for i = MatlabPoolTest.N:-1:1
                 result = MatlabPool.wait(id(i));
-                assert(abs(result{1}-sqrt(i)) < eps)
+                assert(isempty(result.outputBuf))
+                assert(isempty(result.errorBuf))
+                assert(abs(result.result-sqrt(i)) < eps)
             end
             MatlabPoolTest.check_is_empty()
         end
 
         function test_invalid_eval(~)
+            MatlabPool.clear();
             try
                 MatlabPool.eval('pwwwd')
             catch e
@@ -130,25 +153,25 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
         end
 
         function test_invalid_job(~)
+            MatlabPool.clear();
             id = MatlabPool.submit('sqqqrt',1,47);
-            try
-                MatlabPool.wait(id);
-                MatlabPoolTest.check_is_empty()
-            catch e
-                if strcmp(e.identifier,'MatlabPoolMEX:JobExecutionError')
-                    return
-                end
-            end
-            error('no error thrown')
+            result = MatlabPool.wait(id);
+            assert(isempty(result.outputBuf))
+            assert(~isempty(result.errorBuf))
+            MatlabPoolTest.check_is_empty()
         end
 
         function test_job_with_disp(~)
+            MatlabPool.clear();
             id = MatlabPool.submit('disp',0,'Hello World');
-            MatlabPool.wait(id);
+            result = MatlabPool.wait(id);
+            assert(~isempty(result.outputBuf))
+            assert(isempty(result.errorBuf))
             MatlabPoolTest.check_is_empty()
         end
 
         function test_jobStatus(~)
+            MatlabPool.clear();
             for i = MatlabPoolTest.N:-1:1
                 id(i) = MatlabPool.submit('sqrt',1,i);
             end
@@ -158,12 +181,13 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
             assert(all(structfun(@(x)length(x),status) == MatlabPoolTest.N))
             for i = MatlabPoolTest.N:-1:1
                 result = MatlabPool.wait(id(i));
-                assert(abs(result{1}-sqrt(i)) < eps)
+                assert(abs(result.result-sqrt(i)) < eps)
             end
             MatlabPoolTest.check_is_empty()
         end
 
         function test_cancelJobs(~)
+            MatlabPool.clear();
             time = 0.001;
             for i = MatlabPoolTest.N:-1:1
                 id(i) = MatlabPool.submit('pause',1,time);
@@ -175,6 +199,7 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
         end
 
         function test_workerStatus(~)
+            MatlabPool.clear();
             for i = MatlabPoolTest.N:-1:1
                 id(i) = MatlabPool.submit('sqrt',1,i);
             end
@@ -182,8 +207,7 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
             assert(length(intersect(fieldnames(status),{'Ready'})) == 1)
             assert(all(structfun(@(x)uint64(length(x)),status) == MatlabPool.size()))
             for i = MatlabPoolTest.N:-1:1
-                result = MatlabPool.wait(id(i));
-                assert(abs(result{1}-sqrt(i)) < eps)
+                MatlabPool.wait(id(i));
             end
             MatlabPoolTest.check_is_empty()
         end

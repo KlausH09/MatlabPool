@@ -41,8 +41,11 @@ classdef MatlabPool < handle
             status = MatlabPoolMEX(MatlabPool.cmd_statusWorker);
         end
         
-        function eval(fun)
-            MatlabPoolMEX(MatlabPool.cmd_eval,fun);
+        function result = eval(fun)
+            result = MatlabPoolMEX(MatlabPool.cmd_eval,fun);
+            if ~isempty(result.errorBuf)
+                error('MatlabPool:Eval',result.errorBuf)
+            end
         end
         
         function cancel(jobid)
