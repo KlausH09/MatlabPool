@@ -6,8 +6,6 @@
 
 #include "MatlabPool/JobBase.hpp"
 
-#include "MatlabDataArray.hpp"
-
 namespace MatlabPool
 {
     class JobFeval : public JobBase
@@ -26,6 +24,15 @@ namespace MatlabPool
             Canceled,
             DoneEmpty,
             Empty,
+        };
+        class JobFevalException : public Exception
+        {
+        };
+        class NoResults : public JobFevalException
+        {
+        public:
+            const char *what() const noexcept;
+            const char *identifier() const noexcept;
         };
 
     public:
@@ -52,6 +59,8 @@ namespace MatlabPool
         const std::vector<matlab::data::Array> &peek_result() const;
 
         std::vector<matlab::data::Array> pop_result();
+
+        matlab::data::StructArray toStruct();
 
     protected:
         Status status;

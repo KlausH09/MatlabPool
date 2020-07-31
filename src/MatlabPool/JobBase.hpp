@@ -5,7 +5,9 @@
 
 #include "MatlabPool/StreamBuf.hpp"
 #include "MatlabPool/Exception.hpp"
+#include "MatlabPool/Utilities.hpp"
 
+#include "MatlabDataArray.hpp"
 
 namespace MatlabPool
 {
@@ -60,7 +62,10 @@ namespace MatlabPool
         OutputBuf &get_outBuf() noexcept;
         ErrorBuf &get_errBuf() noexcept;
 
+        matlab::data::StructArray toStruct();
+
     protected:
+        inline static matlab::data::ArrayFactory factory;
         JobID id;
         std::u16string cmd;
 
