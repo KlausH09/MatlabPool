@@ -88,17 +88,7 @@ void MexFunction::wait(ArgumentList &outputs, ArgumentList &inputs)
     JobID jobid = get_scalar<JobID>(inputs[1]);
     JobFeval job = pool->wait(jobid);
 
-    std::vector<matlab::data::Array> result = job.pop_result();
-
-    if (!job.get_outBuf().empty())
-        disp(job.get_outBuf().str());
-
-    auto result_cell = factory.createCellArray({result.size()});
-
-    for (std::size_t i = 0; i < result.size(); i++)
-        result_cell[i] = std::move(result[i]);
-
-    outputs[0] = std::move(result_cell);
+    outputs[0] = job.toStruct();
 }
 
 void MexFunction::statusJobs(ArgumentList &outputs, ArgumentList &inputs)
@@ -131,8 +121,7 @@ void MexFunction::eval(ArgumentList &outputs, ArgumentList &inputs)
     MatlabPool::JobEval job(get_string(inputs[1]));
     pool->eval(job);
 
-    if (!job.get_outBuf().empty())
-        disp(job.get_outBuf().str());
+    outputs[0] = job.toStruct();
 }
 void MexFunction::cancel(ArgumentList &outputs, ArgumentList &inputs)
 {

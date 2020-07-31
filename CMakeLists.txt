@@ -35,9 +35,7 @@ include_directories(${Matlab_INCLUDE_DIRS}
 
 # definitions
 getLibPath(MatlabPool_lib_path "MatlabPool")
-add_definitions(-DMATLABPOOL_DISP_WORKER_OUTPUT
-                -DMATLABPOOL_DISP_WORKER_ERROR
-                -DMATLABPOOL_DLL_PATH="${MatlabPool_lib_path}")
+add_definitions(-DMATLABPOOL_DLL_PATH="${MatlabPool_lib_path}")
 
 # static library for source files in ${PROJECT_SOURCE_DIR}/src/MatlabPool
 aux_source_directory(${PROJECT_SOURCE_DIR}/src/MatlabPool source_MatlabPoolStaticLib)

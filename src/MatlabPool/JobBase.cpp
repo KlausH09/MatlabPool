@@ -3,7 +3,7 @@
 namespace MatlabPool
 {
 
-    JobBase::ExecutionError::ExecutionError(std::shared_ptr<StreamBuf> buffer)
+    JobBase::ExecutionError::ExecutionError(std::shared_ptr<StringBuf> buffer)
     {
         std::ostringstream os;
         os << "an error has occurred during execution";
@@ -15,7 +15,7 @@ namespace MatlabPool
         msg = os.str();
     }
 
-    JobBase::ExecutionError::ExecutionError(JobID id, std::shared_ptr<StreamBuf> buffer)
+    JobBase::ExecutionError::ExecutionError(JobID id, std::shared_ptr<StringBuf> buffer)
     {
         std::ostringstream os;
         os << "an error has occurred during job execution (id: " << id << ")";
@@ -76,12 +76,12 @@ namespace MatlabPool
         return cmd;
     }
 
-    OutputBuf &JobBase::get_outBuf() noexcept
+    StreamBuf &JobBase::get_outBuf() noexcept
     {
         return outputBuf;
     }
 
-    ErrorBuf &JobBase::get_errBuf() noexcept
+    StreamBuf &JobBase::get_errBuf() noexcept
     {
         return errorBuf;
     }

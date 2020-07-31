@@ -2,10 +2,6 @@
     "configurations": [
         {
             "name": "Linux",
-            "defines": [
-                "MATLABPOOL_DISP_WORKER_OUTPUT",
-                "MATLABPOOL_DISP_WORKER_ERROR"
-            ],
             "compilerPath": "/usr/bin/g++", 
             "intelliSenseMode": "gcc-x64",
             "includePath": [
@@ -18,10 +14,6 @@
         },
         {
             "name": "Win32",
-            "defines": [
-                "MATLABPOOL_DISP_WORKER_OUTPUT",
-                "MATLABPOOL_DISP_WORKER_ERROR"
-            ],
             "compilerPath": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2019b\\3P.instrset\\mingw_w64.instrset\\bin\\g++.exe", 
             "intelliSenseMode": "gcc-x64",
             "includePath": [

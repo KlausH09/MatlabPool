@@ -133,14 +133,8 @@ void run_tests()
         JobEval job(u"pwd");
         pool->eval(job);
 
-        UnexpectCondition::Assert(job.get_status() == JobEval::Status::NoError, "error in at least one worker");
         UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
-
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
-#else
-            UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
-#endif
     });
 
     test.run("jobs and eval", Effort::Normal, [&]() {
@@ -163,13 +157,8 @@ void run_tests()
             pool->eval(job);
         });
 
-        UnexpectCondition::Assert(job.get_status() == JobEval::Status::Error, "there was no error during \"eval\"");
         UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
-#ifdef MATLABPOOL_DISP_WORKER_ERROR
         UnexpectCondition::Assert(!job.get_errBuf().empty(), "empty error buffer");
-#else
-            UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
-#endif
     });
 
     test.run("invalid job", Effort::Normal, [&]() {
@@ -179,11 +168,7 @@ void run_tests()
         UnexpectException<JobBase::ExecutionError>::check([&]() {
             job.pop_result();
         });
-#ifdef MATLABPOOL_DISP_WORKER_ERROR
         UnexpectCondition::Assert(!job.get_errBuf().empty(), "empty error buffer");
-#else
-            UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
-#endif
     });
 
     test.run("job with disp", Effort::Normal, [&]() {
@@ -191,11 +176,7 @@ void run_tests()
         JobFeval job = pool->wait(id);
 
         UnexpectCondition::Assert(job.get_errBuf().empty(), "error buffer should be empty");
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
         UnexpectCondition::Assert(!job.get_outBuf().empty(), "empty output buffer");
-#else
-            UnexpectCondition::Assert(job.get_outBuf().empty(), "output buffer should be empty");
-#endif
     });
 
     test.run("get job status", Effort::Normal, [&]() {

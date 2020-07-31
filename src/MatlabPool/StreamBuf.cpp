@@ -15,68 +15,51 @@ namespace MatlabPool
         return std::string(asciistr_ptr.get());
     }
 
-    std::shared_ptr<StreamBuf> EmptyStreamBuffer::get() const noexcept
-    {
-        return std::shared_ptr<StreamBuf>(nullptr);
-    }
-
-    std::u16string EmptyStreamBuffer::str() const noexcept
-    {
-        return u"";
-    }
-
-    bool EmptyStreamBuffer::empty() const noexcept
-    {
-        return true;
-    }
-
-    void swap(EmptyStreamBuffer &rhs, EmptyStreamBuffer &lhs) noexcept {}
-
-    std::size_t RealStreamBuffer::BasicStringBuf::size() const noexcept
+    std::size_t StreamBuf::BasicStringBuf::size() const noexcept
     {
         MATLABPOOL_ASSERT(pptr() >= pbase());
         return pptr() - pbase();
     }
-    bool RealStreamBuffer::BasicStringBuf::empty() const noexcept
+    bool StreamBuf::BasicStringBuf::empty() const noexcept
     {
         return pptr() == pbase();
     }
 
-    RealStreamBuffer::RealStreamBuffer() : buffer(std::make_shared<BasicStringBuf>()) {}
+    StreamBuf::StreamBuf() : buffer(std::make_shared<BasicStringBuf>()) {}
 
-    std::shared_ptr<StreamBuf> RealStreamBuffer::get() const noexcept
+    std::shared_ptr<StringBuf> StreamBuf::get() const noexcept
     {
-        return std::static_pointer_cast<StreamBuf>(buffer);
+        return std::static_pointer_cast<StringBuf>(buffer);
     }
 
-    std::u16string RealStreamBuffer::str() const
+    std::u16string StreamBuf::str() const
     {
         return buffer->str();
     }
 
-    bool RealStreamBuffer::empty() const
+    bool StreamBuf::empty() const
     {
         return buffer->empty();
     }
 
-    RealStreamBuffer &RealStreamBuffer::operator<<(const std::u16string &val)
+    StreamBuf &StreamBuf::operator<<(const std::u16string &val)
     {
         buffer->sputn(&val[0], val.size());
         return *this;
     }
-    RealStreamBuffer &RealStreamBuffer::operator<<(const char16_t *val)
+    StreamBuf &StreamBuf::operator<<(const char16_t *val)
     {
         buffer->sputn(val, strlen16(val));
         return *this;
     }
 
-    void swap(RealStreamBuffer &lhs, RealStreamBuffer &rhs) noexcept
+    void swap(StreamBuf &lhs, StreamBuf &rhs) noexcept
     {
         using std::swap;
         swap(rhs.buffer, lhs.buffer);
     }
 
-    std::size_t RealStreamBuffer::strlen16(const char16_t *strarg)
+    std::size_t StreamBuf::strlen16(const char16_t *strarg)
     {
         MATLABPOOL_ASSERT(strarg);
         const char16_t *str = strarg;

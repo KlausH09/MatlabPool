@@ -198,8 +198,8 @@ namespace MatlabPool
         {
             std::size_t n = engine.size();
 
-            std::vector<OutputBuf> outBuf_vec(n);
-            std::vector<ErrorBuf> errBuf_vec(n);
+            std::vector<StreamBuf> outBuf_vec(n);
+            std::vector<StreamBuf> errBuf_vec(n);
 
             std::vector<matlab::engine::FutureResult<void>> future(n);
 
@@ -220,9 +220,6 @@ namespace MatlabPool
                 }
                 job.add_output(outBuf_vec[i], i);
             }
-
-            if (job.get_status() == JobEval::Status::Error)
-                throw JobBase::ExecutionError(job.get_errBuf().get());
         }
 
         matlab::data::StructArray get_job_status() override

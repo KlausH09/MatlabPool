@@ -11,20 +11,6 @@
 
 namespace MatlabPool
 {
-#ifdef MATLABPOOL_DISP_WORKER_OUTPUT
-    constexpr const bool disp_output_buffer = true;
-    using OutputBuf = RealStreamBuffer;
-#else
-    constexpr const bool disp_output_buffer = false;
-    using OutputBuf = EmptyStreamBuffer;
-#endif
-#ifdef MATLABPOOL_DISP_WORKER_ERROR
-    constexpr const bool disp_error_buffer = true;
-    using ErrorBuf = RealStreamBuffer;
-#else
-    constexpr const bool disp_error_buffer = false;
-    using ErrorBuf = EmptyStreamBuffer;
-#endif
     using JobID = std::uint64_t;
 
     class JobBase
@@ -39,8 +25,8 @@ namespace MatlabPool
         class ExecutionError : public JobBaseException
         {
         public:
-            ExecutionError(std::shared_ptr<StreamBuf> buffer);
-            ExecutionError(JobID id, std::shared_ptr<StreamBuf> buffer);
+            ExecutionError(std::shared_ptr<StringBuf> buffer);
+            ExecutionError(JobID id, std::shared_ptr<StringBuf> buffer);
             const char *what() const noexcept override;
             const char *identifier() const noexcept override;
         private:
@@ -59,8 +45,8 @@ namespace MatlabPool
 
         JobID get_ID() const noexcept;
         const std::u16string &get_cmd() const noexcept;
-        OutputBuf &get_outBuf() noexcept;
-        ErrorBuf &get_errBuf() noexcept;
+        StreamBuf &get_outBuf() noexcept;
+        StreamBuf &get_errBuf() noexcept;
 
         matlab::data::StructArray toStruct();
 
@@ -69,8 +55,8 @@ namespace MatlabPool
         JobID id;
         std::u16string cmd;
 
-        OutputBuf outputBuf;
-        ErrorBuf errorBuf;
+        StreamBuf outputBuf;
+        StreamBuf errorBuf;
 
     private:
         inline static JobID id_count = 1;
