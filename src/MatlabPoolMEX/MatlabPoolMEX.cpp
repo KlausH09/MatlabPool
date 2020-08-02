@@ -1,6 +1,52 @@
 #include "MatlabPoolMEX.hpp"
 #include "MexCommands.hpp"
 
+const char *MexFunction::EmptyPool::what() const noexcept
+{
+    return "MatlabPool is not initialized";
+}
+const char *MexFunction::EmptyPool::identifier() const noexcept
+{
+    return "EmptyPool";
+}
+
+MexFunction::InvalidInputSize::InvalidInputSize(std::size_t size)
+{
+    std::ostringstream os;
+    os << "invalid input size: " << size;
+    msg = os.str();
+}
+const char *MexFunction::InvalidInputSize::what() const noexcept
+{
+    return msg.c_str();
+}
+const char *MexFunction::InvalidInputSize::identifier() const noexcept
+{
+    return "InvalidInputSize";
+}
+
+MexFunction::InvalidParameterSize::InvalidParameterSize(std::vector<std::size_t> size)
+{
+    std::ostringstream os;
+    os << "invalid parameter size: (";
+    std::string seperator = "";
+    for (auto s : size)
+    {
+        os << seperator << s;
+        seperator = ",";
+    }
+    os << ")";
+    msg = os.str();
+}
+const char *MexFunction::InvalidParameterSize::what() const noexcept
+{
+    return msg.c_str();
+}
+const char *MexFunction::InvalidParameterSize::identifier() const noexcept
+{
+    return "InvalidParameterSize";
+}
+
 void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs)
 {
     using namespace MatlabPool;
@@ -50,7 +96,7 @@ void MexFunction::resize(ArgumentList &outputs, ArgumentList &inputs)
 
     std::vector<std::u16string> options;
     for (auto e = inputs.begin() + 2; e != inputs.end(); ++e)
-        options.push_back(get_string(*e));
+        options.push_back(((matlab::data::CharArray)*e).toUTF16());
 
     if (!pool)
     {
@@ -70,9 +116,11 @@ void MexFunction::submit(ArgumentList &outputs, ArgumentList &inputs)
     if (inputs.size() < 3)
         throw InvalidInputSize(inputs.size());
 
-    JobID jobid = pool->submit(JobFeval(get_string(inputs[1]),
-                                   get_scalar<std::size_t>(inputs[2]),
-                                   {inputs.begin() + 3, inputs.end()}));
+    std::u16string funname = ((matlab::data::CharArray)inputs[1]).toUTF16();
+
+    JobID jobid = pool->submit(JobFeval(std::move(funname),
+                                        get_scalar<std::size_t>(inputs[2]),
+                                        {inputs.begin() + 3, inputs.end()}));
     outputs[0] = factory.createScalar<JobID>(jobid);
 }
 
@@ -118,7 +166,9 @@ void MexFunction::eval(ArgumentList &outputs, ArgumentList &inputs)
     if (inputs.size() != 2)
         throw InvalidInputSize(inputs.size());
 
-    MatlabPool::JobEval job(get_string(inputs[1]));
+    std::u16string funname = ((matlab::data::CharArray)inputs[1]).toUTF16();
+
+    MatlabPool::JobEval job(std::move(funname));
     pool->eval(job);
 
     outputs[0] = job.toStruct();

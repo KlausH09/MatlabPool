@@ -3,12 +3,15 @@
 
 #include "MatlabPoolMEX.hpp"
 
-namespace MatlabPool::MexCommands
+namespace MatlabPool
 {
-    using CmdID = uint8_t;
 
-    namespace
+    class MexCommands
     {
+    public:
+        using CmdID = uint8_t;
+
+    private:
         // define function pointer
         typedef void (MexFunction::*CmdFun)(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
 
@@ -19,7 +22,7 @@ namespace MatlabPool::MexCommands
         } Cmd;
 
         // define commands with name
-        constexpr Cmd commands[] =
+        inline static constexpr Cmd commands[] =
             {
                 /*  0 */ {"resize", &MexFunction::resize},
                 /*  1 */ {"submit", &MexFunction::submit},
@@ -32,29 +35,50 @@ namespace MatlabPool::MexCommands
                 /*  8 */ {"clear", &MexFunction::clear},
         };
 
-        constexpr CmdID nof_commands = CmdID(sizeof(commands) / sizeof(Cmd));
+        inline static constexpr CmdID nof_commands = CmdID(sizeof(commands) / sizeof(Cmd));
+
+    public:
+        class MexCommandsException : public Exception
+        {
+        };
+        class UndefCmd : public MexCommandsException
+        {
+        public:
+            inline const char *what() const noexcept override
+            {
+                return "Undefined command";
+            }
+            inline const char *identifier() const noexcept override
+            {
+                return "UndefCMD";
+            }
+        };
+
+    public:
+        // get the name of a command
+        inline static const char *get_name(CmdID i) noexcept
+        {
+            if (i >= nof_commands)
+                return "undefined_command";
+
+            return commands[i].name;
+        }
+
+        // get the function pointer of a command
+        inline static CmdFun get_fun(CmdID i)
+        {
+            if (i >= nof_commands)
+                throw UndefCmd();
+
+            return commands[i].fun;
+            // call the function with:  (this->*Commands::get_fun(i))(...);
+        }
+    };
+    namespace
+    {
+
     } // namespace
 
-    // get the name of a command
-    inline const char *get_name(CmdID i) noexcept
-    {
-        static constexpr const char undef_cmd[] = "undefined_command";
-        if (i >= nof_commands)
-            return undef_cmd;
-
-        return commands[i].name;
-    }
-
-    // get the function pointer of a command
-    inline CmdFun get_fun(CmdID i)
-    {
-        if (i >= nof_commands)
-            throw MexFunction::UndefCmd();
-
-        return commands[i].fun;
-        // call the function with:  (this->*Commands::get_fun(i))(...);
-    }
-
-} // namespace Commands
+} // namespace MatlabPool
 
 #endif
