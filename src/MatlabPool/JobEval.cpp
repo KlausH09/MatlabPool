@@ -29,12 +29,14 @@ namespace MatlabPool
     {
         if (!buf.empty())
         {
-            errorBuf << u"============= Error: Worker " << workerID + 1 << u", Job: " << id << u" ===============\n";
+            errorBuf << u"============= Error: Worker " << workerID + 1
+                << u", Job: " << id << u" ===============\n";
             errorBuf << buf.str();
         }
         else
         {
-            errorBuf << u"Error: Worker " << workerID + 1 << u", Job: " << id << u"\n";
+            errorBuf << u"Error: Worker " << workerID + 1
+                << u", Job: " << id << u"\n";
         }
     }
 
@@ -42,7 +44,8 @@ namespace MatlabPool
     {
         if (!buf.empty())
         {
-            outputBuf << u"============= Output Worker " << workerID + 1 << u", Job: " << id << u" ===============\n";
+            outputBuf << u"============= Output Worker " << workerID + 1
+                << u", Job: " << id << u" ===============\n";
             outputBuf << buf.str();
         }
     }

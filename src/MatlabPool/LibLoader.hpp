@@ -63,7 +63,9 @@ namespace MatlabPool
         template <typename FUN>
         FUN *load_fun(const char *name)
         {
-            FUN *fun = reinterpret_cast<FUN *>(MATLABPOOL_LOADLIBFUN(handle, name));
+            FUN *fun = reinterpret_cast<FUN *>(
+                MATLABPOOL_LOADLIBFUN(handle, name));
+                
             if (!fun)
                 throw CannotLoadDLLFunction(name);
             return fun;

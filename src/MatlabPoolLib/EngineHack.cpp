@@ -11,38 +11,56 @@ namespace MatlabPool
     void EngineHack::eval_job(JobFuture &job, Notifier &&notifier)
     {
         using namespace matlab::execution;
+        using matlab::data::impl::ArrayImpl;
 
         size_t nrhs = job.get_args().size();
-        std::unique_ptr<matlab::data::impl::ArrayImpl *, void (*)(matlab::data::impl::ArrayImpl **)> argsImplPtr(new matlab::data::impl::ArrayImpl *[nrhs], [](matlab::data::impl::ArrayImpl **ptr) {
-            delete[] ptr;
-            });
-        matlab::data::impl::ArrayImpl **argsImpl = argsImplPtr.get();
+
+        std::unique_ptr<ArrayImpl *, void (*)(ArrayImpl **)> argsImplPtr(
+            new ArrayImpl *[nrhs],
+            [](ArrayImpl **ptr)
+            {
+                delete[] ptr;
+            }
+        );
+
+        ArrayImpl **argsImpl = argsImplPtr.get();
         size_t i = 0;
         for (auto &e : job.get_args())
-            argsImpl[i++] = matlab::data::detail::Access::getImpl<matlab::data::impl::ArrayImpl>(std::move(e));
+            argsImpl[i++] = matlab::data::detail::Access::getImpl<ArrayImpl>(std::move(e));
 
-        std::promise<std::vector<matlab::data::Array>> *p = new std::promise<std::vector<matlab::data::Array>>();
+        std::promise<std::vector<matlab::data::Array>> *p =
+            new std::promise<std::vector<matlab::data::Array>>();
+
         MatlabPromiseHack *p_hack = new MatlabPromiseHack{ p, std::move(notifier) };
+
         std::future<std::vector<matlab::data::Array>> f = p->get_future();
 
-        // the maltab implementation will call 'delete output' and 'delete error', so we have to copy it
+        // the maltab implementation will call 'delete output' and 
+        // 'delete error', so we have to copy it
         void *output = job.get_outBuf().get()
-            ? new std::shared_ptr<matlab::execution::StreamBuffer>(job.get_outBuf().get())
+            ? new std::shared_ptr<StreamBuffer>(job.get_outBuf().get())
             : nullptr;
         void *error = job.get_errBuf().get()
-            ? new std::shared_ptr<matlab::execution::StreamBuffer>(job.get_errBuf().get())
+            ? new std::shared_ptr<StreamBuffer>(job.get_errBuf().get())
             : nullptr;
 
         std::string funstr = MatlabPool::convertUTF16StringToASCIIString(job.get_cmd());
 
-        uintptr_t handle = cpp_engine_feval_with_completion(matlabHandle, funstr.c_str(),
+        uintptr_t handle = cpp_engine_feval_with_completion(
+            matlabHandle,
+            funstr.c_str(),
             job.get_nlhs(), false, argsImpl, nrhs,
             set_feval_promise_data_hack,
             set_feval_promise_exception_hack,
             p_hack, output, error,
             &writeToStreamBuffer,
-            &deleteStreamBufferImpl);
-        job.set_future(FutureResult<std::vector<matlab::data::Array>>(std::move(f), std::make_shared<TaskReference>(handle, cpp_engine_cancel_feval_with_completion)));
+            &deleteStreamBufferImpl
+        );
+
+        job.set_future(FutureResult<std::vector<matlab::data::Array>>(
+            std::move(f),
+            std::make_shared<TaskReference>(handle, cpp_engine_cancel_feval_with_completion))
+        );
     }
 
     // this function is copied from:
@@ -56,7 +74,10 @@ namespace MatlabPool
             std::vector<char16_t *> options_v(options.size());
 
             std::transform(options.begin(), options.end(), options_v.begin(),
-                [](const std::u16string &option) { return const_cast<char16_t *>(option.c_str()); });
+                [](const std::u16string &option) {
+                    return const_cast<char16_t *>(option.c_str());
+                }
+            );
 
             bool errFlag = false;
 
@@ -64,7 +85,8 @@ namespace MatlabPool
                 options_v.data(), options_v.size(), &errFlag);
 
             if (errFlag)
-                throw matlab::engine::EngineException("MATLAB process cannot be created.");
+                throw matlab::engine::EngineException(
+                    "MATLAB process cannot be created.");
 
             return matlab;
         };
@@ -72,7 +94,9 @@ namespace MatlabPool
         return future;
     }
 
-    void EngineHack::set_feval_promise_data_hack(void *p, size_t nlhs, bool straight, matlab::data::impl::ArrayImpl **plhs)
+    void EngineHack::set_feval_promise_data_hack(
+        void *p, size_t nlhs, bool straight,
+        matlab::data::impl::ArrayImpl **plhs)
     {
         MatlabPromiseHack *p_hack = reinterpret_cast<MatlabPromiseHack *>(p);
 
@@ -87,7 +111,9 @@ namespace MatlabPool
         delete p_hack;
     }
 
-    void EngineHack::set_feval_promise_exception_hack(void *p, size_t nlhs, bool straight, size_t excTypeNumber, const void *msg)
+    void EngineHack::set_feval_promise_exception_hack(
+        void *p, size_t nlhs, bool straight, 
+        size_t excTypeNumber, const void *msg)
     {
         MatlabPromiseHack *p_hack = reinterpret_cast<MatlabPromiseHack *>(p);
 

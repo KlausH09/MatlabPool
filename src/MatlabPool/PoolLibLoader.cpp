@@ -12,7 +12,7 @@ namespace MatlabPool
 
     PoolLibLoader::PoolLibLoader()
         : LibLoader(lib_path),
-          constructor(load_fun<Constructor>(lib_function))
+        constructor(load_fun<Constructor>(lib_function))
     {
     }
 
@@ -22,7 +22,8 @@ namespace MatlabPool
         return instance;
     }
 
-    Pool *PoolLibLoader::createPool(std::size_t n, const std::vector<std::u16string> &options)
+    Pool *PoolLibLoader::createPool(std::size_t n,
+        const std::vector<std::u16string> &options)
     {
         return get().constructor(n, options);
     }

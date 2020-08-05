@@ -14,16 +14,18 @@ namespace MatlabPool
         return "JobFevalNoResults";
     }
 
-    JobFeval::JobFeval() noexcept : JobBase(), status(Status::Empty), workerID(-1){};
+    JobFeval::JobFeval() noexcept
+        : JobBase(),
+        status(Status::Empty),
+        workerID(-1) {}
 
-    JobFeval::JobFeval(std::u16string cmd, std::size_t nlhs, std::vector<matlab::data::Array> &&args)
+    JobFeval::JobFeval(std::u16string cmd, std::size_t nlhs,
+        std::vector<matlab::data::Array> &&args)
         : JobBase(cmd),
-          status(Status::Wait),
-          nlhs(nlhs),
-          args(std::move(args)),
-          workerID(-1)
-    {
-    }
+        status(Status::Wait),
+        nlhs(nlhs),
+        args(std::move(args)),
+        workerID(-1) {}
 
     JobFeval::JobFeval(JobFeval &&other) noexcept : JobFeval()
     {
@@ -98,7 +100,7 @@ namespace MatlabPool
 
     matlab::data::StructArray JobFeval::toStruct()
     {
-        auto st = Utilities::addFields(JobBase::toStruct(), {"result"});
+        auto st = Utilities::addFields(JobBase::toStruct(), { "result" });
 
         if (status == Status::Done)
         {
@@ -109,7 +111,7 @@ namespace MatlabPool
                 st[0]["result"] = std::move(result[0]);
             else
             {
-                auto tmp = factory.createCellArray({1, result.size()});
+                auto tmp = factory.createCellArray({ 1, result.size() });
                 std::move(result.begin(), result.end(), tmp.begin());
                 st[0]["result"] = std::move(tmp);
             }

@@ -17,7 +17,8 @@ namespace MatlabPool
 
     private:
         // define function pointer
-        typedef void (MexFunction::*CmdFun)(matlab::mex::ArgumentList &outputs, matlab::mex::ArgumentList &inputs);
+        typedef void (MexFunction::*CmdFun)(matlab::mex::ArgumentList &outputs,
+            matlab::mex::ArgumentList &inputs);
 
         typedef struct Cmd
         {

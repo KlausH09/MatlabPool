@@ -20,7 +20,8 @@ namespace MatlabPool
         static PoolLibLoader &get();
 
     public:
-        static Pool *createPool(std::size_t n, const std::vector<std::u16string> &options);
+        static Pool *createPool(std::size_t n,
+            const std::vector<std::u16string> &options);
 
     private:
         Constructor *constructor;

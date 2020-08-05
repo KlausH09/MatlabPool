@@ -8,7 +8,8 @@ project(MatlabPool)
 enable_testing()
 
 set(MatlabVersion 9.4) # Matlab R2018a or later
-find_package(Matlab ${MatlabVersion} REQUIRED ENG_LIBRARY MX_LIBRARY MAT_LIBRARY MAIN_PROGRAM)
+find_package(Matlab ${MatlabVersion} REQUIRED 
+    ENG_LIBRARY MX_LIBRARY MAT_LIBRARY MAIN_PROGRAM)
 
 # library paths
 link_directories(${Matlab_LIBRARIES})

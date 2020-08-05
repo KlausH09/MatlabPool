@@ -50,7 +50,9 @@ namespace MatlabPool
         StreamBuf &operator<<(const T &val)
         {
             static std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
+
             auto tmp = std::u16string{conv.from_bytes(std::to_string(val))};
+            
             buffer->sputn(&tmp[0], tmp.size());
             return *this;
         }

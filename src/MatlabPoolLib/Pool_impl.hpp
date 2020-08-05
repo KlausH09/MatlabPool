@@ -29,7 +29,8 @@ namespace MatlabPool
         ~PoolImpl() override;
 
         // start or close matlab workers
-        void resize(unsigned int n_new, const std::vector<std::u16string> &options) override;
+        void resize(unsigned int n_new,
+            const std::vector<std::u16string> &options) override;
 
         // number of engines
         std::size_t size() const override;

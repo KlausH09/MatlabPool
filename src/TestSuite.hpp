@@ -29,7 +29,7 @@ public:
     TestSuite &operator=(const TestSuite &) = delete;
 
     TestSuite(const std::string &header = "Start Test") : count(0), failed(0),
-                                                          prefun([]() {}), postfun([]() {})
+        prefun([]() {}), postfun([]() {})
     {
         std::size_t len1 = 0;
         std::size_t len2 = 0;
@@ -38,7 +38,8 @@ public:
             len1 = (header_length - (header.size() + 2)) / 2;
             len2 = header_length - (header.size() + 2 + len1);
         }
-        std::cout << std::string(len1, '=') << " " << header << " " << std::string(len2, '=') << std::endl;
+        std::cout << std::string(len1, '=') << " " << header << " "
+            << std::string(len2, '=') << std::endl;
     }
     ~TestSuite()
     {
@@ -89,7 +90,8 @@ public:
             }
 
             std::cout.setf(std::ios::fixed | std::ios_base::right);
-            std::cout << "ok " << std::setw(6) << std::setprecision(2) << toc() << " sec" << std::endl;
+            std::cout << "ok " << std::setw(6) << std::setprecision(2) << toc()
+                << " sec" << std::endl;
             --failed;
         }
         catch (std::exception &e)
@@ -157,12 +159,6 @@ public:
     {
         return msg.c_str();
     }
-    static void Assert(bool cond, const char *msg_ = nullptr)
-    {
-        if (!cond)
-            throw UnexpectCondition(msg_);
-    }
-
 private:
     std::string msg;
 };
@@ -209,5 +205,12 @@ public:
 private:
     std::string msg;
 };
+
+
+void Assert(bool cond, const char *msg = nullptr)
+{
+    if (!cond)
+        throw UnexpectCondition(msg);
+}
 
 #endif

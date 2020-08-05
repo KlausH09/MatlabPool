@@ -217,7 +217,8 @@ namespace MatlabPool
         }
         lock_jobs.unlock();
 
-        auto result = factory.createStructArray({ 1 }, { "JobID", "Status", "WorkerID" });
+        auto result = factory.createStructArray({ 1 },
+            { "JobID", "Status", "WorkerID" });
         result[0]["JobID"] = std::move(jobID);
         result[0]["Status"] = std::move(status);
         result[0]["WorkerID"] = std::move(worker);

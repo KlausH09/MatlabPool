@@ -18,31 +18,37 @@ namespace MatlabPool
 {
 
     inline void safe_assert(bool condition, const char *condition_text,
-                            const char *filename, int line, const char *function) noexcept
+        const char *filename, int line,
+        const char *function) noexcept
     {
-        if (!condition)
-        {
-            try
-            {
-                std ::cerr << " Assertion failed : " << condition_text << ", file " << filename << ", line " << line << ", function " << function << std ::endl;
-            }
-            catch (...)
-            {
-            }
-            std ::abort();
-        }
-    }
-
-    inline void safe_error(const char *msg, const char *filename, int line, const char *function) noexcept
-    {
+        if (condition)
+            return;
+            
         try
         {
-            std ::cerr << " an error has occurred : " << msg << ", file " << filename << ", line " << line << ", function " << function << std ::endl;
+            std::cerr << " Assertion failed : " << condition_text
+                << ", file " << filename << ", line " << line
+                << ", function " << function << std::endl;
         }
         catch (...)
         {
         }
-        std ::abort();
+        std::abort();
+    }
+
+    inline void safe_error(const char *msg, const char *filename,
+        int line, const char *function) noexcept
+    {
+        try
+        {
+            std::cerr << " an error has occurred : " << msg
+                << ", file " << filename << ", line " << line
+                << ", function " << function << std::endl;
+        }
+        catch (...)
+        {
+        }
+        std::abort();
     }
 
 } // namespace MatlabPool

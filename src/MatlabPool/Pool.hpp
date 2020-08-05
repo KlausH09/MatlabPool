@@ -41,7 +41,8 @@ namespace MatlabPool
         Pool &operator=(const Pool &) = delete;
 
         virtual ~Pool() {}
-        virtual void resize(unsigned int n_new, const std::vector<std::u16string> &options) = 0;
+        virtual void resize(unsigned int n_new,
+            const std::vector<std::u16string> &options) = 0;
         virtual std::size_t size() const = 0;
         virtual JobID submit(JobFeval &&job) = 0;
         virtual JobFeval wait(JobID job_id) = 0;

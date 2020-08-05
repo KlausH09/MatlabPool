@@ -41,21 +41,24 @@ namespace MatlabPool
 
     private:
         // start a matlab session 
-        std::future<uint64_t> start_matlabasync(const std::vector<std::u16string> &options);
+        std::future<uint64_t> start_matlabasync(
+            const std::vector<std::u16string> &options);
 
         // set a value in the std::promise object and call 
         // the "Notifier" object
         // original function: set_feval_promise_data
         // source: matlabroot/extern/include/MatlabEngine/detail/engine_execution_interface_impl.hpp
-        static void set_feval_promise_data_hack(void *p, size_t nlhs, bool straight,
-                                                matlab::data::impl::ArrayImpl **plhs);
+        static void set_feval_promise_data_hack(
+            void *p, size_t nlhs, bool straight,
+            matlab::data::impl::ArrayImpl **plhs);
 
         // set a exception in the std::promise object and call 
         // the "Notifier" object
         // original function: set_feval_promise_exception
         // source: matlabroot/extern/include/MatlabEngine/detail/engine_execution_interface_impl.hpp
-        static void set_feval_promise_exception_hack(void *p, size_t nlhs, bool straight,
-                                                     size_t excTypeNumber, const void *msg);
+        static void set_feval_promise_exception_hack(
+            void *p, size_t nlhs, bool straight,
+            size_t excTypeNumber, const void *msg);
     };
 } // namespace MatlabPool
 

@@ -10,19 +10,20 @@ namespace MatlabPool
         if (buffer)
         {
             os << '\n'
-               << convertUTF16StringToASCIIString(buffer->str());
+                << convertUTF16StringToASCIIString(buffer->str());
         }
         msg = os.str();
     }
 
-    JobBase::ExecutionError::ExecutionError(JobID id, std::shared_ptr<StringBuf> buffer)
+    JobBase::ExecutionError::ExecutionError(JobID id,
+        std::shared_ptr<StringBuf> buffer)
     {
         std::ostringstream os;
         os << "an error has occurred during job execution (id: " << id << ")";
         if (buffer)
         {
             os << '\n'
-               << convertUTF16StringToASCIIString(buffer->str());
+                << convertUTF16StringToASCIIString(buffer->str());
         }
         msg = os.str();
     }
@@ -37,9 +38,9 @@ namespace MatlabPool
         return "JobExecutionError";
     }
 
-    JobBase::JobBase() noexcept : id(0){};
+    JobBase::JobBase() noexcept : id(0) {};
     JobBase::JobBase(std::u16string cmd) : id(id_count++),
-                                           cmd(std::move(cmd))
+        cmd(std::move(cmd))
     {
     }
 
@@ -88,7 +89,8 @@ namespace MatlabPool
 
     matlab::data::StructArray JobBase::toStruct()
     {
-        auto st = factory.createStructArray({1}, {"function", "outputBuf", "errorBuf"});
+        auto st = factory.createStructArray({ 1 },
+            { "function", "outputBuf", "errorBuf" });
         st[0]["function"] = factory.createCharArray(cmd);
         st[0]["outputBuf"] = factory.createCharArray(outputBuf.str());
         st[0]["errorBuf"] = factory.createCharArray(errorBuf.str());
