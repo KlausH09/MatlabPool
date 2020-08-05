@@ -11,9 +11,6 @@
 
 class TestSuite
 {
-    TestSuite(const TestSuite &) = delete;
-    TestSuite &operator=(const TestSuite &) = delete;
-
     static constexpr std::size_t header_length = 74;
 
 public:
@@ -26,6 +23,9 @@ public:
     };
 
 public:
+    TestSuite(const TestSuite &) = delete;
+    TestSuite &operator=(const TestSuite &) = delete;
+
     TestSuite(const std::string &header = "Start Test") : count(0), failed(0),
                                                           prefun([]() {}), postfun([]() {})
     {

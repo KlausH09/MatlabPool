@@ -19,10 +19,11 @@ namespace MatlabPool
             std::promise<std::vector<matlab::data::Array>> *prom;
             Notifier notifier;
         };
+
+    public:
         EngineHack(const EngineHack &) = delete;
         EngineHack &operator=(const EngineHack &) = delete;
 
-    public:
         EngineHack(const std::vector<std::u16string> &options);
 
         void eval_job(JobFuture &job, Notifier &&notifier);

@@ -1,8 +1,5 @@
 #include "MatlabPoolLib/Pool_impl.hpp"
 
-#include <type_traits>
-#include <iomanip>
-
 namespace MatlabPool
 {
     PoolImpl::PoolImpl(unsigned int n, const std::vector<std::u16string> &options)

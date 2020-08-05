@@ -10,9 +10,6 @@ namespace MatlabPool
 {
     class JobFeval : public JobBase
     {
-        JobFeval(const JobFeval &) = delete;
-        JobFeval &operator=(const JobFeval &) = delete;
-
     public:
         enum class Status : uint8_t
         {
@@ -36,6 +33,9 @@ namespace MatlabPool
         };
 
     public:
+        JobFeval(const JobFeval &) = delete;
+        JobFeval &operator=(const JobFeval &) = delete;
+
         JobFeval() noexcept;
         JobFeval(std::u16string cmd, std::size_t nlhs, std::vector<matlab::data::Array> &&args);
         JobFeval(JobFeval &&other) noexcept;

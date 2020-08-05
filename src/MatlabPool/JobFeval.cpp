@@ -95,7 +95,7 @@ namespace MatlabPool
         return result;
     }
 
-    std::vector<matlab::data::Array> JobFeval::pop_result() 
+    std::vector<matlab::data::Array> JobFeval::pop_result()
     {
         if (status == Status::Error)
             throw ExecutionError(id, errorBuf.get());

@@ -25,9 +25,6 @@ namespace MatlabPool
 {
     class LibLoader
     {
-        LibLoader(const LibLoader &) = delete;
-        LibLoader &operator=(const LibLoader &) = delete;
-
     public:
         class LibLoaderException : public Exception
         {
@@ -54,11 +51,14 @@ namespace MatlabPool
         };
 
     public:
+        LibLoader(const LibLoader &) = delete;
+        LibLoader &operator=(const LibLoader &) = delete;
+
         LibLoader(const char *path);
         ~LibLoader();
 
         template <typename FUN>
-        FUN* load_fun(const char *name)
+        FUN *load_fun(const char *name)
         {
             FUN *fun = reinterpret_cast<FUN *>(MATLABPOOL_LOADLIBFUN(handle, name));
             if (!fun)

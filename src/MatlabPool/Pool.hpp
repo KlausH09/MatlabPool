@@ -8,13 +8,10 @@ namespace MatlabPool
 {
     class Pool
     {
-        Pool(const Pool &) = delete;
-        Pool &operator=(const Pool &) = delete;
-    protected:
-        Pool(){}
     public:
         class PoolException : public Exception
-        {};
+        {
+        };
 
         class JobNotExists : public PoolException
         {
@@ -22,10 +19,11 @@ namespace MatlabPool
             JobNotExists(JobID id);
             const char *what() const noexcept override;
             const char *identifier() const noexcept override;
+
         private:
             std::string msg;
         };
-        
+
         class EmptyPool : public PoolException
         {
         public:
@@ -33,7 +31,14 @@ namespace MatlabPool
             const char *identifier() const noexcept override;
         };
 
-        virtual ~Pool(){}
+    protected:
+        Pool() {}
+
+    public:
+        Pool(const Pool &) = delete;
+        Pool &operator=(const Pool &) = delete;
+
+        virtual ~Pool() {}
         virtual void resize(unsigned int n_new, const std::vector<std::u16string> &options) = 0;
         virtual std::size_t size() const = 0;
         virtual JobID submit(JobFeval &&job) = 0;
@@ -45,6 +50,5 @@ namespace MatlabPool
         virtual void clear() = 0;
     };
 } // namespace MatlabPool
-
 
 #endif

@@ -15,9 +15,6 @@ namespace MatlabPool
 
     class JobBase
     {
-        JobBase(const JobBase &) = delete;
-        JobBase &operator=(const JobBase &) = delete;
-
     public:
         class JobBaseException : public MatlabPool::Exception
         {
@@ -29,6 +26,7 @@ namespace MatlabPool
             ExecutionError(JobID id, std::shared_ptr<StringBuf> buffer);
             const char *what() const noexcept override;
             const char *identifier() const noexcept override;
+
         private:
             std::string msg;
         };
@@ -38,6 +36,9 @@ namespace MatlabPool
         JobBase(std::u16string cmd);
 
     public:
+        JobBase(const JobBase &) = delete;
+        JobBase &operator=(const JobBase &) = delete;
+
         JobBase(JobBase &&other) noexcept;
         JobBase &operator=(JobBase &&other) noexcept;
 

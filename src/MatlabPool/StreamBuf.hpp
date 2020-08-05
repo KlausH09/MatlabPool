@@ -26,6 +26,9 @@ namespace MatlabPool
         };
 
     public:
+        StreamBuf(const StreamBuf &) = delete;
+        StreamBuf &operator=(const StreamBuf &) = delete;
+
         StreamBuf();
 
         std::shared_ptr<StringBuf> get() const noexcept;

@@ -9,6 +9,9 @@ namespace MatlabPool
     class JobEval : public JobBase
     {
     public:
+        JobEval(const JobEval &) = delete;
+        JobEval &operator=(const JobEval &) = delete;
+
         JobEval() noexcept;
         JobEval(std::u16string cmd);
         JobEval(JobEval &&other) noexcept;

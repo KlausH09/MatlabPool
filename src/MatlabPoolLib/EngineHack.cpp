@@ -1,6 +1,5 @@
 #include "MatlabPoolLib/EngineHack.hpp"
 
-
 namespace MatlabPool
 {
     EngineHack::EngineHack(const std::vector<std::u16string> &options)

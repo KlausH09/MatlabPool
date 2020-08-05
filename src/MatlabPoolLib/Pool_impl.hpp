@@ -17,10 +17,11 @@ namespace MatlabPool
     class PoolImpl : public Pool
     {
         using EnginePtr = std::unique_ptr<EngineHack>;
+
+    public:
         PoolImpl(const PoolImpl &) = delete;
         PoolImpl &operator=(const PoolImpl &) = delete;
 
-    public:
         PoolImpl(unsigned int n, const std::vector<std::u16string> &options);
         ~PoolImpl() override;
 

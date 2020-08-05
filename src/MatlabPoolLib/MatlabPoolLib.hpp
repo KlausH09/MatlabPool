@@ -5,7 +5,7 @@
 
 extern "C"
 {
-    MatlabPool::Pool* construct(unsigned int n, const std::vector<std::u16string> &options);
+    MatlabPool::Pool *construct(unsigned int n, const std::vector<std::u16string> &options);
 }
 
 #endif

@@ -7,7 +7,8 @@
 
 namespace MatlabPool::Utilities
 {
-    matlab::data::StructArray addFields(matlab::data::StructArray val, std::vector<std::string> fieldsNew);
+    matlab::data::StructArray addFields(matlab::data::StructArray val,
+                                        std::vector<std::string> fieldsNew);
 
 } // namespace MatlabPool::Utilities
 

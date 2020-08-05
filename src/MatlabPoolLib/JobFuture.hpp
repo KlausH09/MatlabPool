@@ -14,6 +14,9 @@ namespace MatlabPool
         using Future = matlab::engine::FutureResult<Result>;
 
     public:
+        JobFuture(const JobFuture &other) = delete;
+        JobFuture &operator=(const JobFuture &other) = delete;
+
         JobFuture() noexcept;
         JobFuture(JobFeval &&job) noexcept;
         JobFuture(JobFuture &&other) noexcept;

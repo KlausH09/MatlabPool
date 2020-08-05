@@ -3,7 +3,8 @@
 
 namespace MatlabPool::Utilities
 {
-    matlab::data::StructArray addFields(matlab::data::StructArray val, std::vector<std::string> fieldsNew)
+    matlab::data::StructArray addFields(matlab::data::StructArray val,
+                                        std::vector<std::string> fieldsNew)
     {
         using namespace matlab::data;
         ArrayFactory factory;
