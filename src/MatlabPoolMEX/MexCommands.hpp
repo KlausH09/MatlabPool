@@ -6,6 +6,10 @@
 namespace MatlabPool
 {
 
+    // this class defines the available functions of the
+    // MatlabPool. It is actually a enumeration class:
+    // It returns functions pointers and the name of the
+    // functions
     class MexCommands
     {
     public:
@@ -23,16 +27,16 @@ namespace MatlabPool
 
         // define commands with name
         inline static constexpr Cmd commands[] =
-            {
-                /*  0 */ {"resize", &MexFunction::resize},
-                /*  1 */ {"submit", &MexFunction::submit},
-                /*  2 */ {"wait", &MexFunction::wait},
-                /*  3 */ {"statusJobs", &MexFunction::statusJobs},
-                /*  4 */ {"statusWorker", &MexFunction::statusWorker},
-                /*  5 */ {"eval", &MexFunction::eval},
-                /*  6 */ {"cancel", &MexFunction::cancel},
-                /*  7 */ {"size", &MexFunction::size},
-                /*  8 */ {"clear", &MexFunction::clear},
+        {
+            /*  0 */{ "resize", &MexFunction::resize },
+            /*  1 */{ "submit", &MexFunction::submit },
+            /*  2 */{ "wait", &MexFunction::wait },
+            /*  3 */{ "statusJobs", &MexFunction::statusJobs },
+            /*  4 */{ "statusWorker", &MexFunction::statusWorker },
+            /*  5 */{ "eval", &MexFunction::eval },
+            /*  6 */{ "cancel", &MexFunction::cancel },
+            /*  7 */{ "size", &MexFunction::size },
+            /*  8 */{ "clear", &MexFunction::clear },
         };
 
         inline static constexpr CmdID nof_commands = CmdID(sizeof(commands) / sizeof(Cmd));

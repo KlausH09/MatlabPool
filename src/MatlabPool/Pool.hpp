@@ -6,6 +6,8 @@
 
 namespace MatlabPool
 {
+    // the abstract Pool class. E.g the shared library 
+    // MatlabPoolLib contains a derived class
     class Pool
     {
     public:

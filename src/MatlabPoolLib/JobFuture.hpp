@@ -8,6 +8,10 @@
 namespace MatlabPool
 {
 
+    // This class complets the "JobFeval" class. The
+    // additional functions and members depends on the
+    // Matlab Engine API, thats why this class is 
+    // outsourced in the MatlabPool library
     class JobFuture : public JobFeval
     {
         using Result = std::vector<matlab::data::Array>;
@@ -25,8 +29,13 @@ namespace MatlabPool
 
         friend void swap(JobFuture &j1, JobFuture &j2) noexcept;
 
+        // set results of the jobs
         void set_future(Future &&val) noexcept;
+
+        // wait until the job is done
         void wait() noexcept;
+
+        // cancel the job
         void cancel() noexcept;
 
         Status get_status() const noexcept;

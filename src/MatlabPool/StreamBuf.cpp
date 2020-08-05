@@ -2,9 +2,13 @@
 
 namespace MatlabPool
 {
-
+    
+    // this function is copied from:
+    //   matlabroot/extern/include/MatlabEngine/detail/engine_execution_interface_impl.hpp
+    //   (Line 542)
     std::string convertUTF16StringToASCIIString(const std::u16string &str)
     {
+
         std::unique_ptr<char[]> asciistr_ptr(new char[str.size() + 1]);
         asciistr_ptr.get()[str.size()] = '\0';
         const char *u16_src = reinterpret_cast<const char *>(str.c_str());

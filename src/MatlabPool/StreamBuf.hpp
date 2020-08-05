@@ -14,10 +14,19 @@ namespace MatlabPool
 {
     using StringBuf = std::basic_stringbuf<char16_t>;
 
+    // converts a std::u16string to a std::string by cutting the 
+    // extra bytes
     std::string convertUTF16StringToASCIIString(const std::u16string &str);
 
+    // this class works like a std::ostringstream but with char16_t 
+    // characters. It also delivers a shared pointer to the string
+    // buffer, this is usefull for working with the Matlab Engine API
     class StreamBuf
     {
+        // derived class for an access to the protected base class
+        // function. These protected functions are only used for
+        // computing the size and for checking whether no characters
+        // in the buffer. 
         class BasicStringBuf : public StringBuf
         {
         public:
@@ -52,6 +61,7 @@ namespace MatlabPool
         friend void swap(StreamBuf &lhs, StreamBuf &rhs) noexcept;
 
     private:
+        // like std::strlen
         std::size_t strlen16(const char16_t *strarg);
 
     private:

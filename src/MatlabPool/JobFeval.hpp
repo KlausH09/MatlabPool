@@ -9,7 +9,19 @@
 namespace MatlabPool
 {
     // this class describes a single job processed by
-    // a single worker. 
+    // a single worker. Objects of this class can store
+    // results of the jobs ("nlhs" number of return values,
+    // "result" vector of matlab data types).
+    // the "nlhs" value is necessary for the function
+    // call or rather the job execution, because matlab
+    // function can be depend on the number of output
+    // arguments, e.g.
+    //      [e] = eig(A);     % nlhs = 1
+    //      [V,D] = eig(A);   % nlhs = 2
+    // with
+    //      e : eigenvalues (vector)
+    //      V : eigenvectors (matrix)
+    //      D : eigenvalues (diagonal matrix) 
     class JobFeval : public JobBase
     {
     public:
@@ -38,7 +50,10 @@ namespace MatlabPool
         JobFeval &operator=(const JobFeval &) = delete;
 
         JobFeval() noexcept;
-        JobFeval(std::u16string cmd, std::size_t nlhs, std::vector<matlab::data::Array> &&args);
+
+        JobFeval(std::u16string cmd, std::size_t nlhs,
+            std::vector<matlab::data::Array> &&args);
+
         JobFeval(JobFeval &&other) noexcept;
 
         JobFeval &operator=(JobFeval &&other) noexcept;
@@ -55,17 +70,27 @@ namespace MatlabPool
 
         Status get_status() const noexcept;
 
+        // return a reference to the results of the job
         const std::vector<matlab::data::Array> &peek_result() const;
 
+        // pop the result of the job. This will set the
+        // status to "DoneEmpty", so you can call this 
+        // function only once
         std::vector<matlab::data::Array> pop_result();
 
+        // store the members of this object in a matlab struct
         matlab::data::StructArray toStruct();
 
     protected:
         Status status;
 
+        // number of return values
         std::size_t nlhs;
+
+        // function/job arguments
         std::vector<matlab::data::Array> args;
+
+        // result
         std::vector<matlab::data::Array> result;
 
     private:

@@ -13,6 +13,10 @@ namespace MatlabPool
 {
     using JobID = std::uint64_t;
 
+    // base class for job classes. Every object of this class gets
+    // an unique id (JobID). This class also provides an error and
+    // output buffer, these buffers can be used during the job
+    // execution to save e.g. error information.
     class JobBase
     {
     public:
@@ -49,16 +53,17 @@ namespace MatlabPool
         StreamBuf &get_outBuf() noexcept;
         StreamBuf &get_errBuf() noexcept;
 
+        // store the members of this object in a matlab struct
         matlab::data::StructArray toStruct();
 
     protected:
         inline static matlab::data::ArrayFactory factory;
+
         JobID id;
         std::u16string cmd;
 
         StreamBuf outputBuf;
         StreamBuf errorBuf;
-
     private:
         inline static JobID id_count = 1;
     };

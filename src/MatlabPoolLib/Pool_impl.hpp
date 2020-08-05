@@ -14,6 +14,9 @@
 
 namespace MatlabPool
 {
+    // The actual MatlabPool implementation. This class 
+    // works like a "usual" thread pool, but there is
+    // an extra master thread for job assignment.
     class PoolImpl : public Pool
     {
         using EnginePtr = std::unique_ptr<EngineHack>;
@@ -25,8 +28,10 @@ namespace MatlabPool
         PoolImpl(unsigned int n, const std::vector<std::u16string> &options);
         ~PoolImpl() override;
 
+        // start or close matlab workers
         void resize(unsigned int n_new, const std::vector<std::u16string> &options) override;
 
+        // number of engines
         std::size_t size() const override;
 
         JobID submit(JobFeval &&job) override;
@@ -41,11 +46,14 @@ namespace MatlabPool
 
         void cancel(JobID jobID) override;
 
+        // remove and cancel all jobs
         void clear() override;
 
     private:
+        // check if a job exists
         bool exists(JobID id) noexcept;
 
+        // get free worker, possibly wait until a worker is ready
         std::size_t get_free_worker(std::unique_lock<std::mutex> &lock) noexcept;
 
     private:

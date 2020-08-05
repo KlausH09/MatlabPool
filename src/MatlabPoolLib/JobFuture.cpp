@@ -11,21 +11,25 @@ namespace MatlabPool
         using std::swap;
         std::swap(static_cast<JobFeval &>(*this), job);
     }
+
     JobFuture::JobFuture(JobFuture &&other) noexcept : JobFuture()
     {
         using std::swap;
         swap(*this, other);
     }
+
     JobFuture &JobFuture::operator=(JobFuture &&other) noexcept
     {
         using std::swap;
         swap(*this, other);
         return *this;
     }
+
     JobFuture::~JobFuture()
     {
         cancel();
     }
+
     void swap(JobFuture &j1, JobFuture &j2) noexcept
     {
         using std::swap;
@@ -37,6 +41,7 @@ namespace MatlabPool
     {
         future = std::move(val);
     }
+
     void JobFuture::wait() noexcept
     {
         try
@@ -53,6 +58,7 @@ namespace MatlabPool
             MATLABPOOL_ERROR("unexpect exception");
         }
     }
+
     void JobFuture::cancel() noexcept
     {
         if (status != Status::Canceled && future.valid())

@@ -8,6 +8,7 @@
 
 #include "MatlabPool.hpp"
 
+// MexFunction, this class provides a interface to matlab 
 class MexFunction : public matlab::mex::Function
 {
     using ArgumentList = matlab::mex::ArgumentList;
@@ -71,11 +72,11 @@ private:
     template <typename T>
     inline void throwError(const char *id, const T &msg)
     {
-        std::string id_msg{"MatlabPoolMEX:"};
+        std::string id_msg{ "MatlabPoolMEX:" };
         id_msg += id;
         matlabPtr->feval(u"error", 0,
-                         std::vector<matlab::data::Array>({factory.createScalar(id_msg),
-                                                           factory.createScalar(msg)}));
+            std::vector<matlab::data::Array>({ factory.createScalar(id_msg),
+                factory.createScalar(msg) }));
     }
 
 private:

@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+// an exception safe assert function from the lecture.
+
 #ifdef NDEBUG
 #define MATLABPOOL_ASSERT(condition) ((void)0)
 #define MATLABPOOL_ERROR(msg) ((void)0)

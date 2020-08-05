@@ -23,6 +23,9 @@
 
 namespace MatlabPool
 {
+    // This class can be use for loading shared libraries and their 
+    // functions. It works under Windows and Linux, probably also with
+    // Mac  
     class LibLoader
     {
     public:

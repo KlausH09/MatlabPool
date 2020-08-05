@@ -25,8 +25,8 @@ classdef MatlabPool < handle
             clear('MatlabPoolMEX')
         end
         
-        function jobid = submit(fun,nof_args,varargin)
-            jobid = MatlabPoolMEX(MatlabPool.cmd_submit,fun,uint64(nof_args),varargin{:});
+        function jobid = submit(fun,nof_out,varargin)
+            jobid = MatlabPoolMEX(MatlabPool.cmd_submit,fun,uint64(nof_out),varargin{:});
         end
         
         function result = wait(jobid)

@@ -76,7 +76,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs)
     {
         std::ostringstream os;
         os << "error in MatlabPoolMex::" << MexCommands::get_name(id) << "()\n"
-           << e.what();
+            << e.what();
         throwError("ErrorInCmd", os.str());
     }
     catch (...)
@@ -119,8 +119,8 @@ void MexFunction::submit(ArgumentList &outputs, ArgumentList &inputs)
     std::u16string funname = ((matlab::data::CharArray)inputs[1]).toUTF16();
 
     JobID jobid = pool->submit(JobFeval(std::move(funname),
-                                        get_scalar<std::size_t>(inputs[2]),
-                                        {inputs.begin() + 3, inputs.end()}));
+        get_scalar<std::size_t>(inputs[2]),
+        { inputs.begin() + 3, inputs.end() }));
     outputs[0] = factory.createScalar<JobID>(jobid);
 }
 

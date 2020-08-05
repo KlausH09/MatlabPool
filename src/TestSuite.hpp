@@ -9,11 +9,13 @@
 #include <chrono>
 #include <map>
 
+// class for testing
 class TestSuite
 {
     static constexpr std::size_t header_length = 74;
 
 public:
+    // to describe the effort of a test 
     enum class Effort
     {
         Small,
@@ -43,26 +45,31 @@ public:
         std::cout << std::string(header_length, '=') << std::endl;
     }
 
+    // set a function which runs before every test
     void set_preFun(std::function<void()> fun)
     {
         prefun = std::move(fun);
     }
 
+    // set a function which runs after every test
     void set_postFun(std::function<void()> fun)
     {
         postfun = std::move(fun);
     }
 
+    // run test multiple times depending on their effort
     void set_countEval(Effort effort, std::size_t count)
     {
         count_evaluations[effort] = count;
     }
 
+    // count of failed test
     std::size_t get_failed() const noexcept
     {
         return failed;
     }
 
+    // run a test
     template <typename T>
     void run(const std::string &description, Effort effort, T &&operation)
     {

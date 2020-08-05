@@ -6,7 +6,8 @@
 
 namespace MatlabPool
 {
-
+    // This singleton class is just for loading the MatlabPool
+    // library
     class PoolLibLoader : protected LibLoader
     {
         using Constructor = Pool *(std::size_t, const std::vector<std::u16string> &);

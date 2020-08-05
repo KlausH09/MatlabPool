@@ -5,7 +5,10 @@
 
 namespace MatlabPool
 {
-
+    // this class can be use to execute a function on every 
+    // Matlab instance. E.g. you can run the "eval" function
+    // to execute the Matlab command "cd(...)" to set the 
+    // current path on each worker.
     class JobEval : public JobBase
     {
     public:
@@ -20,7 +23,10 @@ namespace MatlabPool
 
         friend void swap(JobEval &j1, JobEval &j2) noexcept;
 
+        // store error messages
         void add_error(StreamBuf &buf, std::size_t workerID);
+
+        // store output messages
         void add_output(StreamBuf &buf, std::size_t workerID);
     };
 
