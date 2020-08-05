@@ -8,13 +8,14 @@
 
 namespace MatlabPool
 {
+    // this class describes a single job processed by
+    // a single worker. 
     class JobFeval : public JobBase
     {
     public:
         enum class Status : uint8_t
         {
             Wait,
-            AssignToWorker,
             InProgress,
             Done,
             Error,
@@ -44,13 +45,11 @@ namespace MatlabPool
 
         friend void swap(JobFeval &j1, JobFeval &j2) noexcept;
 
-        void set_AssignToWorker_status();
-
         std::size_t get_nlhs() const noexcept;
 
         std::vector<matlab::data::Array> &get_args() noexcept;
 
-        void set_workerID(int val) noexcept;
+        void set_workerID(std::size_t val) noexcept;
 
         int get_workerID() const noexcept;
 

@@ -55,11 +55,7 @@ namespace MatlabPool
     }
     void JobFuture::cancel() noexcept
     {
-        if (status == Status::AssignToWorker)
-        {
-            status = Status::Canceled;
-        }
-        else if (status != Status::Canceled && future.valid())
+        if (status != Status::Canceled && future.valid())
         {
             future.cancel();
             status = Status::Canceled;

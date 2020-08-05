@@ -49,12 +49,6 @@ namespace MatlabPool
         swap(j1.workerID, j2.workerID);
     }
 
-    void JobFeval::set_AssignToWorker_status()
-    {
-        MATLABPOOL_ASSERT(status == Status::Wait);
-        status = Status::AssignToWorker;
-    }
-
     std::size_t JobFeval::get_nlhs() const noexcept
     {
         return nlhs;
@@ -65,13 +59,9 @@ namespace MatlabPool
         return args;
     }
 
-    void JobFeval::set_workerID(int val) noexcept
+    void JobFeval::set_workerID(std::size_t val) noexcept
     {
-        if (val >= 0)
-        {
-            MATLABPOOL_ASSERT(status == Status::AssignToWorker);
-            status = Status::InProgress;
-        }
+        status = Status::InProgress;
         workerID = val;
     }
 

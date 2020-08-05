@@ -4,9 +4,9 @@ namespace MatlabPool
 {
     PoolImpl::PoolImpl(unsigned int n, const std::vector<std::u16string> &options)
         : stop(false),
-          sleep(false),
-          worker_ready(n, false),
-          engine(n)
+        sleep(false),
+        worker_ready(n, false),
+        engine(n)
     {
         if (n == 0)
             throw EmptyPool();
@@ -26,10 +26,7 @@ namespace MatlabPool
                 if (stop)
                     break;
 
-                JobFuture &job = jobs.front();
-                job.set_AssignToWorker_status();
-
-                int workerID;
+                std::size_t workerID;
                 MatlabPool::EngineHack *worker;
 
                 // wait for next free worker
@@ -40,35 +37,32 @@ namespace MatlabPool
                     worker_ready[workerID] = false;
                     worker = engine[workerID].get();
                 }
-                lock_jobs.lock();
-
-                // check if job is canceled during waitting
-                if (job.get_status() == JobFeval::Status::Canceled)
-                {
-                    jobs.pop_front();
+                Notifier notifier = [=]() {
                     std::unique_lock<std::mutex> lock_worker(mutex_worker);
                     worker_ready[workerID] = true;
                     cv_worker.notify_one();
-                }
-                else if (job.get_status() == JobFeval::Status::AssignToWorker)
+                };
+
+                lock_jobs.lock();
+
+                // check if there are still jobs in the queue
+                if (jobs.empty())
                 {
-                    job.set_workerID(workerID); // set also job status to "InProgress"
-                    worker->eval_job(job, [=]() {
-                        std::unique_lock<std::mutex> lock_worker(mutex_worker);
-                        worker_ready[workerID] = true;
-                        cv_worker.notify_one();
-                    });
-                    JobID id_tmp = job.get_ID();
-                    futureMap[id_tmp] = std::move(job);
-                    jobs.pop_front();
-                    cv_future.notify_one();
+                    notifier();
+                    continue;
                 }
-                else
-                {
-                    MATLABPOOL_ERROR("unexpect job status");
-                }
+
+                JobFuture &job = jobs.front();
+                MATLABPOOL_ASSERT(job.get_status() == JobFeval::Status::Wait);
+
+                job.set_workerID(workerID); // set also job status to "InProgress"
+                worker->eval_job(job, std::move(notifier));
+                JobID id_tmp = job.get_ID();
+                futureMap[id_tmp] = std::move(job);
+                jobs.pop_front();
+                cv_future.notify_one();
             }
-        });
+            });
     }
     PoolImpl::~PoolImpl()
     {
@@ -178,8 +172,8 @@ namespace MatlabPool
 
         for (std::size_t i = 0; i < n; i++)
             future[i] = engine[i]->evalAsync(job.get_cmd(),
-                                             outBuf_vec[i].get(),
-                                             errBuf_vec[i].get());
+                outBuf_vec[i].get(),
+                errBuf_vec[i].get());
 
         for (std::size_t i = 0; i < n; i++)
         {
@@ -202,9 +196,9 @@ namespace MatlabPool
 
         using StatusType = std::underlying_type<JobFeval::Status>::type;
 
-        auto jobID = factory.createArray<JobID>({n});
-        auto status = factory.createArray<StatusType>({n});
-        auto worker = factory.createArray<int>({n});
+        auto jobID = factory.createArray<JobID>({ n });
+        auto status = factory.createArray<StatusType>({ n });
+        auto worker = factory.createArray<int>({ n });
 
         std::size_t i = 0;
         for (const auto &j : jobs)
@@ -223,7 +217,7 @@ namespace MatlabPool
         }
         lock_jobs.unlock();
 
-        auto result = factory.createStructArray({1}, {"JobID", "Status", "WorkerID"});
+        auto result = factory.createStructArray({ 1 }, { "JobID", "Status", "WorkerID" });
         result[0]["JobID"] = std::move(jobID);
         result[0]["Status"] = std::move(status);
         result[0]["WorkerID"] = std::move(worker);
@@ -236,13 +230,13 @@ namespace MatlabPool
         std::unique_lock<std::mutex> lock_worker(mutex_worker);
         std::size_t n = engine.size();
 
-        auto ready = factory.createArray<bool>({n});
+        auto ready = factory.createArray<bool>({ n });
         for (std::size_t i = 0; i < n; i++)
             ready[i] = worker_ready[i];
 
         lock_worker.unlock();
 
-        auto result = factory.createStructArray({1}, {"Ready"});
+        auto result = factory.createStructArray({ 1 }, { "Ready" });
         result[0]["Ready"] = std::move(ready);
         return result;
     }
@@ -256,17 +250,7 @@ namespace MatlabPool
         {
             if (it_job->get_ID() == jobID)
             {
-                switch (it_job->get_status())
-                {
-                case JobFeval::Status::AssignToWorker:
-                    it_job->cancel();
-                    break;
-                case JobFeval::Status::Wait:
-                    jobs.erase(it_job);
-                    break;
-                default:
-                    MATLABPOOL_ERROR("unexpect job status");
-                }
+                jobs.erase(it_job);
                 return;
             }
         }
@@ -290,21 +274,7 @@ namespace MatlabPool
         // job queue
         while (!jobs.empty() && jobs.back().get_status() == JobFeval::Status::Wait)
             jobs.pop_back();
-
-        MATLABPOOL_ASSERT(jobs.size() < 2);
-        if (jobs.size() == 1)
-        {
-            switch (jobs.front().get_status())
-            {
-            case JobFeval::Status::Canceled:
-                break;
-            case JobFeval::Status::AssignToWorker:
-                jobs.front().cancel();
-                break;
-            default:
-                MATLABPOOL_ERROR("unexpect job status");
-            }
-        }
+        MATLABPOOL_ASSERT(jobs.empty());
 
         // future jobs
         futureMap.clear();
@@ -325,13 +295,13 @@ namespace MatlabPool
         return false;
     }
 
-    int PoolImpl::get_free_worker(std::unique_lock<std::mutex> &lock) noexcept
+    std::size_t PoolImpl::get_free_worker(std::unique_lock<std::mutex> &lock) noexcept
     {
         for (;;)
         {
             for (std::size_t i = 0; i < worker_ready.size(); i++)
                 if (worker_ready[i])
-                    return int(i);
+                    return i;
 
             cv_worker.wait(lock);
         }

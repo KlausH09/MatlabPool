@@ -46,7 +46,7 @@ namespace MatlabPool
     private:
         bool exists(JobID id) noexcept;
 
-        int get_free_worker(std::unique_lock<std::mutex> &lock) noexcept;
+        std::size_t get_free_worker(std::unique_lock<std::mutex> &lock) noexcept;
 
     private:
         bool stop;                      // mutex_jobs
