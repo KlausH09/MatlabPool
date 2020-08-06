@@ -65,7 +65,7 @@ namespace MatlabPool
 
         std::thread master;
 
-        std::deque<JobFuture> jobs;           // mutex_jobs
+        std::deque<JobFuture> jobQueue;      // mutex_jobs
         std::map<JobID, JobFuture> futureMap; // mutex_jobs
         std::condition_variable cv_queue;
         std::condition_variable cv_worker;

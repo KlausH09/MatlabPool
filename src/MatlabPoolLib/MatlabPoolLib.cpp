@@ -1,5 +1,5 @@
 #include "MatlabPoolLib.hpp"
-#include "MatlabPoolLib/Pool_impl.hpp"
+#include "MatlabPoolLib/PoolImpl.hpp"
 
 MatlabPool::Pool *construct(unsigned int n, const std::vector<std::u16string> &options)
 {
