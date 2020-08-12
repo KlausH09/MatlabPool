@@ -1,6 +1,8 @@
 clear
 close all
 
+addpath([pwd '/build/lib'])
+
 MatlabPool.resize(1);
 
 n = 1000;
@@ -11,4 +13,4 @@ for i = 1:n
     MatlabPool.wait(id);
 end
 t = toc/n;
-fprintf('latency time 1: %.2e sec\n',t)
+fprintf('latency time: %.2e sec\n',t)

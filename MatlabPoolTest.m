@@ -7,6 +7,7 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
     
     methods
         function obj = MatlabPoolTest()
+            addpath([pwd '/build/lib'])
             MatlabPool.init(MatlabPoolTest.nof_worker);
             MatlabPool.clear();
         end

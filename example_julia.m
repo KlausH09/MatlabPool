@@ -1,12 +1,14 @@
 clear
 close all
 
+addpath([pwd '/build/lib'])
+
 MatlabPool.resize(2);
 
 %% dimensions
 width = 3000;
 heigth = 3000;
-blocksize = 100;
+blocksize = 128;
 
 %% julia settings 
 a = 1.7;
