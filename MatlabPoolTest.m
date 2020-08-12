@@ -197,6 +197,18 @@ classdef MatlabPoolTest < matlab.unittest.TestCase
             end
             MatlabPoolTest.check_is_empty()
         end
+        
+        function test_cancelEndlessJobs(~)
+            MatlabPool.clear();
+            time = 1e10;
+            for i = MatlabPoolTest.N:-1:1
+                id(i) = MatlabPool.submit('pause',1,time);
+            end
+            for i = 1:MatlabPoolTest.N
+                MatlabPool.cancel(id(i));
+            end
+            MatlabPoolTest.check_is_empty()
+        end
 
         function test_workerStatus(~)
             MatlabPool.clear();

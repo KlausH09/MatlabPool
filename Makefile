@@ -10,7 +10,7 @@ endif
 
 all: build
 	cd build && ${CMAKE} .. 
-	cd build && ${MAKE}
+	cd build && ${MAKE} -j 4
 
 build: 
 	mkdir build
