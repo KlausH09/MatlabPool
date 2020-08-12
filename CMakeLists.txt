@@ -14,7 +14,7 @@ find_package(Matlab ${MatlabVersion} REQUIRED
 # library paths
 link_directories(${Matlab_LIBRARIES})
 if(UNIX)
-    link_libraries(-ldl)
+    link_libraries(-ldl -pthread)
 endif(UNIX)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib_static)
@@ -59,6 +59,11 @@ set(target matlabpool_test)
 add_executable(${target} ${PROJECT_SOURCE_DIR}/src/${target}.cpp)
 target_link_libraries(${target} ${Matlab_LIBRARIES} MatlabPoolStaticLib)
 add_test(NAME cpp_test COMMAND ${PROJECT_BINARY_DIR}/${target}${CMAKE_EXECUTABLE_SUFFIX})
+
+# matlab memory leak test
+set(target matlab_mem_test)
+add_executable(${target} ${PROJECT_SOURCE_DIR}/src/${target}.cpp)
+target_link_libraries(${target} ${Matlab_LIBRARIES} MatlabPoolStaticLib)
 
 # Matlab tests
 matlab_add_unit_test(
